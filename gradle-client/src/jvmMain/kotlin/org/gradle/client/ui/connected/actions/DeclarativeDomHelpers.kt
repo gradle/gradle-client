@@ -8,15 +8,16 @@ import org.gradle.internal.declarativedsl.dom.DocumentNodeContainer
 import org.gradle.internal.declarativedsl.dom.DocumentResolution.ElementResolution.SuccessfulElementResolution
 import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionContainer
 
-val DeclarativeDocument.singleSoftwareTypeNode: ElementNode?
-    get() = content.filterIsInstance<ElementNode>().singleOrNull()
+fun DeclarativeDocument.singleNodeNamed(name: String): ElementNode? =
+    content.filterIsInstance<ElementNode>().singleOrNull { it.name == name }
+
 
 fun DocumentNodeContainer.childElementNodes(
     resolutionContainer: DocumentResolutionContainer,
     function: SchemaFunction
 ): List<ElementNode> =
-    content.filterIsInstance<ElementNode>().filter { 
-        val resolution = resolutionContainer.data(it) 
+    content.filterIsInstance<ElementNode>().filter {
+        val resolution = resolutionContainer.data(it)
         (resolution as? SuccessfulElementResolution)?.elementFactoryFunction == function
     }
 

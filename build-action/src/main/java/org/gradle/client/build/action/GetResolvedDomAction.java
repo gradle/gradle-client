@@ -33,7 +33,12 @@ public class GetResolvedDomAction implements BuildAction<ResolvedDomPrerequisite
                 .getProjects()
                 .getAll()
                 .stream()
-                .map(p -> new File(p.getProjectDirectory(), "build.gradle.dcl"))
+                .flatMap(p ->
+                        Stream.of(
+                                new File(p.getProjectDirectory(), "build.gradle.kts"),
+                                new File(p.getProjectDirectory(), "build.gradle.dcl")
+                        )
+                )
                 .filter(File::exists).collect(Collectors.toList());
         if (declarativeBuildFiles.isEmpty()) {
             throw new RuntimeException("No declarative project file found");

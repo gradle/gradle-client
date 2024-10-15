@@ -22,6 +22,7 @@ import org.gradle.client.ui.theme.spacing
 import org.gradle.internal.declarativedsl.dom.data.collectToMap
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.FromOverlay
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils.resolvedDocument
+import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils.usedSoftwareTypeNames
 import org.gradle.internal.declarativedsl.evaluator.runner.stepResultOrPartialResult
 import org.gradle.tooling.BuildAction
 import org.jetbrains.skiko.Cursor
@@ -110,11 +111,17 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
 
         val projectAnalysisSchema = projectEvaluationSchema.analysisSchema
 
-        val softwareTypeNode = viewModel.fullModelDom?.document?.singleSoftwareTypeNode
-            ?: run {
-                Text("No software type")
-                return
-            }
+        val singleSoftwareType =
+            viewModel.selectedDocumentResult.stepResults.values.singleOrNull()
+                ?.stepResultOrPartialResult?.usedSoftwareTypeNames()
+                ?.singleOrNull()
+
+        val softwareTypeNode = singleSoftwareType?.let { softwareType ->
+            viewModel.fullModelDom?.document?.singleNodeNamed(softwareType)
+        } ?: run {
+            Text("No software type")
+            return
+        }
 
         val softwareTypeSchema = projectAnalysisSchema.softwareTypeNamed(softwareTypeNode.name)
             ?: run {

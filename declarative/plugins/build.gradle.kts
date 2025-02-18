@@ -6,9 +6,11 @@ description = "Declarative plugins containing custom software types for the grad
 
 dependencies {
     api(libs.declarative)
-    api(libs.sqldelight)
-    api(libs.kotlin.multiplatform)
     api(libs.detekt)
+    api(libs.jetbrains.compose)
+    api(libs.kotlin.compose)
+    api(libs.kotlin.multiplatform)
+    api(libs.sqldelight)
 }
 
 gradlePlugin {
@@ -20,7 +22,7 @@ gradlePlugin {
 
         create("desktop-compose-application") {
             id = "org.gradle.client.softwaretype.desktop-compose-application"
-            implementationClass = "org.gradle.client.softwaretype.desktopcompose.DesktopComposeApplicationPlugin"
+            implementationClass = "org.gradle.client.softwaretype.CustomDesktopComposeApplicationPlugin"
         }
     }
 }

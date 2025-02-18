@@ -1,25 +1,25 @@
-package org.gradle.client.softwaretype.desktopcompose;
+package org.gradle.client.softwaretype;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.internal.plugins.software.SoftwareType;
-import org.gradle.client.softwaretype.detekt.Detekt;
 
 import static org.gradle.api.experimental.kmp.StandaloneKmpApplicationPlugin.PluginWiring.wireKMPApplication;
+import static org.gradle.client.softwaretype.compose.ComposeSupport.wireCompose;
 import static org.gradle.client.softwaretype.detekt.DetektSupport.wireDetekt;
 import static org.gradle.client.softwaretype.sqldelight.SqlDelightSupport.needToWireSqlDelight;
 import static org.gradle.client.softwaretype.sqldelight.SqlDelightSupport.wireSqlDelight;
 
 @SuppressWarnings("UnstableApiUsage")
-public abstract class DesktopComposeApplicationPlugin implements Plugin<Project> {
+public abstract class CustomDesktopComposeApplicationPlugin implements Plugin<Project> {
     public static final String DESKTOP_COMPOSE_APP = "desktopComposeApp";
 
-    @SoftwareType(name = DESKTOP_COMPOSE_APP, modelPublicType = DesktopComposeApplication.class)
-    public abstract DesktopComposeApplication getDesktopComposeApp();
+    @SoftwareType(name = DESKTOP_COMPOSE_APP, modelPublicType = CustomDesktopComposeApplication.class)
+    public abstract CustomDesktopComposeApplication getDesktopComposeApp();
 
     @Override
     public void apply(Project project) {
-        DesktopComposeApplication dslModel = getDesktopComposeApp();
+        CustomDesktopComposeApplication dslModel = getDesktopComposeApp();
 
         project.setGroup(dslModel.getGroup());
         project.setVersion(dslModel.getVersion());
@@ -38,5 +38,7 @@ public abstract class DesktopComposeApplicationPlugin implements Plugin<Project>
                 wireSqlDelight(project, dslModel);
             }
         });
+
+        wireCompose(project, dslModel);
     }
 }

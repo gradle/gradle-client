@@ -1,13 +1,10 @@
 @file:Suppress("UnstableApiUsage")
-import org.gradle.kotlin.dsl.desktop
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.time.Year
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.jetbrainsCompose)
-    alias(libs.plugins.kotlinCompose)
 }
 
 desktopComposeApp {
@@ -101,52 +98,75 @@ desktopComposeApp {
         config.setFrom(rootDir.resolve("gradle/detekt/detekt.conf"))
         parallel = true
     }
-}
 
-val appName = "GradleClient"
-val appDisplayName = "Gradle Client"
-val appQualifiedName = "org.gradle.client"
-val appUUID = file("app-uuid.txt").readText().trim()
-
-compose.desktop {
-    application {
+    compose {
         mainClass = "org.gradle.client.GradleClientMainKt"
-        jvmArgs += "-Xms35m"
-        jvmArgs += "-Xmx128m"
 
-        buildTypes.release.proguard {
-            optimize = false
-            obfuscate = false
-            configurationFiles.from(layout.projectDirectory.file("proguard-desktop.pro"))
+        // TODO: This should use a simpler collection model when one is available in DCL
+        jvmArgs {
+            jvmArg("-Xms") {
+                value = "35m"
+            }
+            jvmArg("-Xmx") {
+                value = "128m"
+            }
+
+            // This was originally added at an inner nesting level, but it's not clear why
+            jvmArg("-splash") {
+                value = "\${'$'}APPDIR/resources/splash.png"
+            }
+        }
+
+        buildTypes {
+            release {
+                proguard {
+                    optimize = false
+                    obfuscate = false
+                    configurationFiles.setFrom(layout.projectDirectory.file("proguard-desktop.pro"))
+                }
+            }
         }
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = appName
+            // TODO: This should use a simpler collection model when one is available in DCL
+            targetFormats {
+                targetFormat("dmg") {
+                    value = TargetFormat.Dmg
+                }
+                targetFormat("mis") {
+                    value = TargetFormat.Msi
+                }
+                targetFormat("deb") {
+                    value = TargetFormat.Deb
+                }
+            }
+
+            packageName = "GradleClient"
             packageVersion = "1.1.3"
-// TODO: restore this            packageVersion = project.version.toString()
-            description = appDisplayName
+            description = "Gradle Client"
             vendor = "Gradle"
-            copyright = "© ${Year.now()} the original author or authors."
+            copyrightYear = Year.now()
             appResourcesRootDir = layout.projectDirectory.dir("src/assets")
-            jvmArgs += "-splash:${'$'}APPDIR/resources/splash.png"
-            modules(
-                "java.instrument",
-                "java.management",
-                "java.naming",
-                "java.scripting",
-                "java.sql",
-                "jdk.compiler",
-                "jdk.security.auth",
-                "jdk.unsupported",
-            )
+
+            // TODO: This should use a simpler collection model when one is available in DCL
+            modules {
+                module("java.instrument") {}
+                module("java.management") {}
+                module("java.naming") {}
+                module("java.scripting") {}
+                module("java.sql") {}
+                module("jdk.compiler") {}
+                module("jdk.security.auth") {}
+                module("jdk.unsupported") {}
+            }
+
             linux {
                 iconFile = layout.projectDirectory.file("src/assets/desktop/icon.png")
             }
             macOS {
                 appStore = false
-                bundleID = appQualifiedName
-                dockName = appDisplayName
+                bundleID = "org.gradle.client"
+                dockName = "Gradle Client"
                 iconFile = layout.projectDirectory.file("src/assets/desktop/icon.icns")
             }
             windows {
@@ -154,7 +174,7 @@ compose.desktop {
                 menuGroup = "" // root
                 perUserInstall = true
                 // https://wixtoolset.org/documentation/manual/v3/howtos/general/generate_guids.html
-                upgradeUuid = appUUID
+                upgradeUuidFile = layout.projectDirectory.file("app-uuid.txt")
                 iconFile = layout.projectDirectory.file("src/assets/desktop/icon.ico")
             }
         }

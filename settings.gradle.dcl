@@ -1,5 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-
 pluginManagement {
     includeBuild("./declarative")
 
@@ -7,13 +5,15 @@ pluginManagement {
     // includeBuild("../now-in-android/declarative-gradle/unified-prototype/unified-plugin")
 
     repositories {
-        gradlePluginPortal {
+        gradlePluginPortal()
+        /*
+            // TOOD: can't filter content searched in repo in DCL yet
             content {
                 includeGroupAndSubgroups("com.gradle")
                 includeGroupAndSubgroups("org.gradle")
                 includeGroupAndSubgroups("io.github.gradle")
             }
-        }
+        */
         mavenCentral()
     }
 }
@@ -28,37 +28,45 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+    // TODO: Not supported in DCL yet
+    // repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
-        google {
+        google()
+        /*
+            // TOOD: can't filter content searched in repo in DCL yet
             content {
                 includeGroupAndSubgroups("androidx")
                 includeGroupAndSubgroups("com.android")
                 includeGroupAndSubgroups("com.google")
             }
-        }
-        gradlePluginPortal {
+        */
+        gradlePluginPortal()
+        /*
+            // TOOD: can't filter content searched in repo in DCL yet
             content {
                 includeGroupAndSubgroups("org.gradle")
             }
+        */
+        maven {
+            url = uri("https://repo.gradle.org/gradle/libs-releases")
         }
-        maven(url = "https://repo.gradle.org/gradle/libs-releases") {
+        /*
+            // TOOD: can't filter content searched in repo in DCL yet
             content {
                 includeGroup("org.gradle")
             }
+        */
+        maven {
+            url = uri("https://repo.gradle.org/gradle/libs-snapshots")
         }
-        maven(url = "https://repo.gradle.org/gradle/libs-snapshots") {
+        /*
+            // TOOD: can't filter content searched in repo in DCL yet
             content {
                 includeGroup("org.gradle")
             }
-        }
+        */
         mavenCentral()
     }
-}
-
-// move this to daemon toolchain once Gradle supports it
-require(JavaVersion.current() == JavaVersion.VERSION_17) {
-    "This build requires Java 17, currently using ${JavaVersion.current()}"
 }
 
 rootProject.name = "gradle-client-root"

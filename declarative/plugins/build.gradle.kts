@@ -26,3 +26,9 @@ gradlePlugin {
         }
     }
 }
+
+// TODO: This is more properly done as part of the root level settings file, but isn't supported in DCL
+// move this to daemon toolchain once Gradle supports it
+require(JavaVersion.current() == JavaVersion.VERSION_17) {
+    "This build requires Java 17, currently using ${JavaVersion.current()}"
+}

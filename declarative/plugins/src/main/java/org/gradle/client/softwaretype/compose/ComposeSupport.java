@@ -1,11 +1,13 @@
 package org.gradle.client.softwaretype.compose;
 
+import kotlin.Unit;
 import org.gradle.api.Project;
 import org.gradle.api.provider.Property;
 import org.gradle.client.softwaretype.CustomDesktopComposeApplication;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
 import org.jetbrains.compose.desktop.application.dsl.*;
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +35,16 @@ public final class ComposeSupport {
             wireBuildTypes(composeModel, application.getBuildTypes());
 
             wireNativeDistribution(composeModel.getNativeDistributions(), nativeDistributions);
+
+            // Need to set the main class for the JVM run task in the KMP model from the one nested in the Compose model
+            // TODO: default this
+            KotlinMultiplatformExtension kotlin = project.getExtensions().getByType(KotlinMultiplatformExtension.class);
+            kotlin.jvm("jvm" , jvm -> {
+                jvm.mainRun(kotlinJvmRunDsl -> {
+                    kotlinJvmRunDsl.getMainClass().set(composeModel.getMainClass());
+                    return Unit.INSTANCE;
+                });
+            });
         });
     }
 

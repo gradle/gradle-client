@@ -18,4 +18,4 @@ dependencyResolutionManagement {
 }
 
 // Check out this project as a sibling to now-in-android, that contains the declarative prototype project to use this
-includeBuild("../../now-in-android/declarative-gradle/unified-prototype/unified-plugin")
+// includeBuild("../../now-in-android/declarative-gradle/unified-prototype/unified-plugin")

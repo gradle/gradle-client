@@ -116,14 +116,16 @@ Building release distributables will fail if the required JDK tools are not avai
 
 ```shell
 # Run from sources
-./gradlew :gradle-client:run
+./gradlew :gradle-client:jvmRun
 
 # Run from sources in continuous mode
-./gradlew -t :gradle-client:run
+./gradlew -t :gradle-client:jmvRun
 
+# TODO: Not working?
 # Run debug build type from build installation
 ./gradlew :gradle-client:runDistributable
 
+# TODO: Not working?
 # Run release build type from build installation
 ./gradlew :gradle-client:runReleaseDistributable
 ```

@@ -40,6 +40,7 @@ desktopComposeApp {
                     implementation("org.slf4j:slf4j-api:2.0.14")
                     implementation("ch.qos.logback:logback-classic:1.5.6")
 
+                    // TODO: Update these to current versions
                     implementation("org.gradle:gradle-declarative-dsl-core:8.12-20241009055624+0000")
                     implementation("org.gradle:gradle-declarative-dsl-evaluator:8.12-20241009055624+0000")
                     implementation("org.gradle:gradle-declarative-dsl-tooling-models:8.12-20241009055624+0000")

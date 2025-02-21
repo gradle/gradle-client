@@ -11,6 +11,7 @@ public final class DetektSupport {
 
         project.afterEvaluate(p -> {
             DetektExtension detekt = project.getExtensions().findByType(DetektExtension.class);
+            assert detekt != null;
             detekt.getSource().from(dslModel.getSource());
             detekt.getConfig().from(dslModel.getConfig());
 

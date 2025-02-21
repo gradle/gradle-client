@@ -10,7 +10,6 @@ import org.gradle.client.softwaretype.sqldelight.SqlDelight;
 import org.gradle.declarative.dsl.model.annotations.Configuring;
 import org.gradle.declarative.dsl.model.annotations.Restricted;
 
-@Restricted
 public interface CustomDesktopComposeApplication {
     @Restricted
     Property<String> getGroup();

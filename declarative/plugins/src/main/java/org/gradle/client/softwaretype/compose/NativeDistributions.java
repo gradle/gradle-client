@@ -3,16 +3,15 @@ package org.gradle.client.softwaretype.compose;
 import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Nested;
 import org.gradle.declarative.dsl.model.annotations.Configuring;
 import org.gradle.declarative.dsl.model.annotations.Restricted;
 
-import java.time.Year;
-
-@Restricted
 public interface NativeDistributions {
-    NamedDomainObjectContainer<TargetFormat> getTargetFormats();
+    @Restricted
+    ListProperty<String> getTargetFormats();
 
     @Restricted
     Property<String> getPackageName();
@@ -27,7 +26,7 @@ public interface NativeDistributions {
     Property<String> getVendor();
 
     @Restricted
-    Property<Year> getCopyrightYear();
+    Property<String> getCopyrightYear();
 
     @Restricted
     DirectoryProperty getAppResourcesRootDir();

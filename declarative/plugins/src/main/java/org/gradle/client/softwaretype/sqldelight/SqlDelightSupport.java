@@ -4,7 +4,6 @@ import app.cash.sqldelight.gradle.SqlDelightExtension;
 import org.gradle.api.Project;
 import org.gradle.client.softwaretype.CustomDesktopComposeApplication;
 
-@SuppressWarnings("UnstableApiUsage")
 public final class SqlDelightSupport {
     private SqlDelightSupport() { /* not instantiable */ }
 
@@ -12,6 +11,7 @@ public final class SqlDelightSupport {
         return !dslModel.getSqlDelight().getDatabases().isEmpty();
     }
 
+    @SuppressWarnings("CodeBlock2Expr")
     public static void wireSqlDelight(Project project, CustomDesktopComposeApplication dslModel) {
         project.getPluginManager().apply("app.cash.sqldelight");
 

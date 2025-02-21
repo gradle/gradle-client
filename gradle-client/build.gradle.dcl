@@ -1,12 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import java.time.Year
-
-plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.kotlinSerialization)
-}
-
 desktopComposeApp {
     group = "org.gradle.client"
 
@@ -16,10 +7,12 @@ desktopComposeApp {
 
     kotlinApplication {
         dependencies {
-            implementation(project.dependencies.platform(libs.kotlin.bom))
-            implementation(project.dependencies.platform(libs.kotlinx.coroutines.bom))
-            implementation(project.dependencies.platform(libs.kotlinx.serialization.bom))
-            implementation(project.dependencies.platform(libs.ktor.bom))
+            implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.0.21"))
+            implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.8.1"))
+            implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.6.3"))
+
+            // TODO: This dep doesn't work, but also is not needed, as we were providing versions of ktor deps anyway
+            // implementation(platform("io.ktor:ktor-bom:2.3.12"))
         }
 
         targets {
@@ -30,31 +23,30 @@ desktopComposeApp {
                     implementation(project(":build-action"))
                     implementation(project(":mutations-demo"))
 
-                    implementation(libs.gradle.tooling.api)
+                    implementation("org.gradle:gradle-tooling-api:8.12-20241009055624+0000")
 
-                    implementation(libs.decompose.decompose)
-                    implementation(libs.decompose.compose)
-                    implementation(libs.essenty.lifecycle.coroutines)
-                    implementation(libs.kotlinx.serialization.json)
+                    implementation("com.arkivanov.decompose:decompose:3.0.0")
+                    implementation("com.arkivanov.decompose:extensions-compose:3.0.0")
+                    implementation("com.arkivanov.essenty:lifecycle-coroutines:1.3.0")
+                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-                    implementation(libs.ktor.client.okhttp)
-                    implementation(libs.ktor.serialization.kotlinx.json)
+                    implementation("io.ktor:ktor-client-okhttp:2.3.12")
+                    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
 
-                    implementation(libs.material3WindowSizeClassMultiplatform)
-                    implementation(libs.materialKolor)
-                    implementation(libs.filekit.compose)
+                    implementation("dev.chrisbanes.material3:material3-window-size-class-multiplatform:0.5.0")
+                    implementation("com.materialkolor:material-kolor:1.7.0")
+                    implementation("io.github.vinceglb:filekit-compose:0.8.2")
 
-                    implementation(libs.slf4j.api)
-                    implementation(libs.logback.classic)
+                    implementation("org.slf4j:slf4j-api:2.0.14")
+                    implementation("ch.qos.logback:logback-classic:1.5.6")
 
-                    implementation(libs.gradle.declarative.dsl.core)
-                    implementation(libs.gradle.declarative.dsl.evaluator)
-                    implementation(libs.gradle.declarative.dsl.tooling.models)
+                    implementation("org.gradle:gradle-declarative-dsl-core:8.12-20241009055624+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-evaluator:8.12-20241009055624+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-tooling-models:8.12-20241009055624+0000")
 
-                    runtimeOnly(libs.kotlinx.coroutines.swing)
+                    runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
 
-                    // TODO: Load these all into the VC
-                    // Compose doesn't play well with DCL SoftwareTypes
+                    // TODO: Compose doesn't play well with DCL SoftwareTypes
                     // But we can determine the value of these strings at runtime and just hardcode them
                     implementation("org.jetbrains.compose.runtime:runtime:1.6.11")
                     implementation("org.jetbrains.compose.foundation:foundation:1.6.11")
@@ -68,13 +60,13 @@ desktopComposeApp {
 
                 testing {
                     dependencies {
-                        implementation(libs.junit.junit)
+                        implementation("junit:junit:4.13.2") // TODO: Unnecessary?
 
-                        // Compose doesn't play well with DCL SoftwareTypes
+                        // TODO: Compose doesn't play well with DCL SoftwareTypes
                         // But we can determine the value of this string at runtime and just hardcode it
                         implementation("org.jetbrains.compose.ui:ui-test-junit4:1.6.11")
 
-                        runtimeOnly(libs.junit.jupiter.engine)
+                        runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
                     }
                 }
             }
@@ -94,8 +86,8 @@ desktopComposeApp {
     }
 
     detekt {
-        source.setFrom("src/jvmMain/kotlin", "src/jvmTest/kotlin")
-        config.setFrom(rootDir.resolve("gradle/detekt/detekt.conf"))
+        source = listOf(layout.projectDirectory.dir("src/jvmMain/kotlin"), layout.projectDirectory.dir("src/jvmTest/kotlin"))
+        config = listOf(layout.projectDirectory.file("../gradle/detekt/detekt.conf"))
         parallel = true
     }
 
@@ -122,30 +114,21 @@ desktopComposeApp {
                 proguard {
                     optimize = false
                     obfuscate = false
-                    configurationFiles.setFrom(layout.projectDirectory.file("proguard-desktop.pro"))
+                    configurationFiles = listOf(layout.projectDirectory.file("proguard-desktop.pro"))
                 }
             }
         }
 
         nativeDistributions {
-            // TODO: This should use a simpler collection model when one is available in DCL
-            targetFormats {
-                targetFormat("dmg") {
-                    value = TargetFormat.Dmg
-                }
-                targetFormat("mis") {
-                    value = TargetFormat.Msi
-                }
-                targetFormat("deb") {
-                    value = TargetFormat.Deb
-                }
-            }
+            // TODO: Soon, we will be able to use unqualified enums in a list in DCL, but not yet
+            targetFormats = listOf("Dmg", "Msi", "Deb")
 
             packageName = "GradleClient"
             packageVersion = "1.1.3"
             description = "Gradle Client"
             vendor = "Gradle"
-            copyrightYear = Year.now()
+            // TODO: We need to be able to add default imports in order to do: copyrightYear = Year.now()
+            copyrightYear = "2025"
             appResourcesRootDir = layout.projectDirectory.dir("src/assets")
 
             // TODO: This should use a simpler collection model when one is available in DCL

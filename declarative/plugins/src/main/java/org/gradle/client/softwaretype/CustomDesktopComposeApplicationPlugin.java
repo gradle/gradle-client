@@ -25,6 +25,8 @@ public abstract class CustomDesktopComposeApplicationPlugin implements Plugin<Pr
         project.setVersion(dslModel.getVersion());
 
         wireKMPApplication(project, dslModel.getKotlinApplication());
+        project.getPlugins().apply("org.jetbrains.kotlin.plugin.serialization");
+
         wireDetekt(project, dslModel.getDetekt());
 
         /*

@@ -1,3 +1,4 @@
+// TODO: This file must unfortunately remain non-DCL, until we can create a new plugin project ecosystem type in the prototype
 plugins {
     id("java-gradle-plugin")
 }
@@ -6,11 +7,12 @@ description = "Declarative plugins containing custom software types for the grad
 
 dependencies {
     api(libs.declarative)
-    api(libs.detekt)
-    api(libs.jetbrains.compose)
-    api(libs.kotlin.compose)
     api(libs.kotlin.multiplatform)
+    api(libs.kotlin.serialization)
+    api(libs.kotlin.compose)
+    api(libs.jetbrains.compose)
     api(libs.sqldelight)
+    api(libs.detekt)
 }
 
 gradlePlugin {

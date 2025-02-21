@@ -4,7 +4,6 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.declarative.dsl.model.annotations.Restricted;
 
-@Restricted
 public interface Windows {
     @Restricted
     RegularFileProperty getIconFile();

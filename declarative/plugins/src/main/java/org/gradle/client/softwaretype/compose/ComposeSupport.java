@@ -2,11 +2,11 @@ package org.gradle.client.softwaretype.compose;
 
 import kotlin.Unit;
 import org.gradle.api.Project;
-import org.gradle.api.provider.Property;
 import org.gradle.client.softwaretype.CustomDesktopComposeApplication;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
 import org.jetbrains.compose.desktop.application.dsl.*;
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat;
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension;
 
 import java.io.IOException;
@@ -61,7 +61,7 @@ public final class ComposeSupport {
     }
 
     private static void wireNativeDistribution(NativeDistributions nativeDistributionsModel, JvmApplicationDistributions nativeDistributions) {
-        nativeDistributions.setTargetFormats(EnumSet.copyOf(nativeDistributionsModel.getTargetFormats().stream().map(TargetFormat::getValue).map(Property::get).collect(Collectors.toList())));
+        nativeDistributions.setTargetFormats(EnumSet.copyOf(nativeDistributionsModel.getTargetFormats().get().stream().map(TargetFormat::valueOf).collect(Collectors.toList())));
 
         nativeDistributions.setPackageName(nativeDistributionsModel.getPackageName().get());
         nativeDistributions.setPackageVersion(nativeDistributionsModel.getPackageVersion().get());

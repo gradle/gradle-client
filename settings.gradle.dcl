@@ -29,7 +29,7 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    // TODO: Not supported in DCL yet
+    // TODO:DCL Not supported in DCL yet
     // repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
         google()

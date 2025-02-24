@@ -1,7 +1,6 @@
 package org.gradle.client.softwaretype.compose;
 
 import org.gradle.api.Action;
-import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -31,7 +30,8 @@ public interface NativeDistributions {
     @Restricted
     DirectoryProperty getAppResourcesRootDir();
 
-    NamedDomainObjectContainer<Module> getModules();
+    @Restricted
+    ListProperty<String> getModules();
 
     @Nested
     Linux getLinux();

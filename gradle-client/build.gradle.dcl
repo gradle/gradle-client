@@ -10,9 +10,6 @@ desktopComposeApp {
             implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.0.21"))
             implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.8.1"))
             implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.6.3"))
-
-            // TODO: This dep doesn't work, but also is not needed, as we were providing versions of ktor deps anyway
-            // implementation(platform("io.ktor:ktor-bom:2.3.12"))
         }
 
         targets {
@@ -40,14 +37,13 @@ desktopComposeApp {
                     implementation("org.slf4j:slf4j-api:2.0.14")
                     implementation("ch.qos.logback:logback-classic:1.5.6")
 
-                    // TODO: Update these to current versions
-                    implementation("org.gradle:gradle-declarative-dsl-core:8.12-20241009055624+0000")
-                    implementation("org.gradle:gradle-declarative-dsl-evaluator:8.12-20241009055624+0000")
-                    implementation("org.gradle:gradle-declarative-dsl-tooling-models:8.12-20241009055624+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-core:8.14-20250222002553+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-evaluator:8.14-20250222002553+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-tooling-models:8.14-20250222002553+0000")
 
                     runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
 
-                    // TODO: Compose doesn't play well with DCL SoftwareTypes
+                    // TODO:DCL Compose doesn't play well with DCL SoftwareTypes
                     // But we can determine the value of these strings at runtime and just hardcode them
                     implementation("org.jetbrains.compose.runtime:runtime:1.6.11")
                     implementation("org.jetbrains.compose.foundation:foundation:1.6.11")
@@ -61,7 +57,7 @@ desktopComposeApp {
 
                 testing {
                     dependencies {
-                        // TODO: Compose doesn't play well with DCL SoftwareTypes
+                        // TODO:DCL Compose doesn't play well with DCL SoftwareTypes
                         // But we can determine the value of this string at runtime and just hardcode it
                         implementation("org.jetbrains.compose.ui:ui-test-junit4:1.6.11")
 
@@ -93,7 +89,7 @@ desktopComposeApp {
     compose {
         mainClass = "org.gradle.client.GradleClientMainKt"
 
-        // TODO: This should use a simpler collection model when one is available in DCL
+        // TODO:DCL This could use a map model when one is available in DCL
         jvmArgs {
             jvmArg("-Xms") {
                 value = "35m"
@@ -104,7 +100,7 @@ desktopComposeApp {
 
             // This was originally added at an inner nesting level, but it's not clear why
             jvmArg("-splash") {
-                value = "\${'$'}APPDIR/resources/splash.png"
+                value = ":\"\$APPDIR/resources/splash.png\""
             }
         }
 
@@ -119,28 +115,27 @@ desktopComposeApp {
         }
 
         nativeDistributions {
-            // TODO: Soon, we will be able to use unqualified enums in a list in DCL, but not yet
+            // TODO:DCL Soon, we will be able to use unqualified enums in a list in DCL, but not yet
             targetFormats = listOf("Dmg", "Msi", "Deb")
 
             packageName = "GradleClient"
             packageVersion = "1.1.3"
             description = "Gradle Client"
             vendor = "Gradle"
-            // TODO: We need to be able to add default imports in order to do: copyrightYear = Year.now()
+            // TODO:DCL We need to be able to add default imports in order to do: copyrightYear = Year.now()
             copyrightYear = "2025"
             appResourcesRootDir = layout.projectDirectory.dir("src/assets")
 
-            // TODO: This should use a simpler collection model when one is available in DCL
-            modules {
-                module("java.instrument") {}
-                module("java.management") {}
-                module("java.naming") {}
-                module("java.scripting") {}
-                module("java.sql") {}
-                module("jdk.compiler") {}
-                module("jdk.security.auth") {}
-                module("jdk.unsupported") {}
-            }
+            modules = listOf(
+                "java.instrument",
+                "java.management",
+                "java.naming",
+                "java.scripting",
+                "java.sql",
+                "jdk.compiler",
+                "jdk.security.auth",
+                "jdk.unsupported",
+            )
 
             linux {
                 iconFile = layout.projectDirectory.file("src/assets/desktop/icon.png")

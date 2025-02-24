@@ -2,6 +2,7 @@ package org.gradle.client.softwaretype.compose;
 
 import kotlin.Unit;
 import org.gradle.api.Project;
+import org.gradle.api.file.RegularFile;
 import org.gradle.client.softwaretype.CustomDesktopComposeApplication;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
@@ -19,10 +20,10 @@ public final class ComposeSupport {
     private ComposeSupport() { /* not instantiable */ }
 
     public static void wireCompose(Project project, CustomDesktopComposeApplication dslModel) {
-        project.getPluginManager().apply("org.jetbrains.compose");
         project.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
 
         project.afterEvaluate(p -> {
+            project.getPluginManager().apply("org.jetbrains.compose");
             ComposeExtension compose = project.getExtensions().getByType(ComposeExtension.class);
             DesktopExtension desktop = compose.getExtensions().getByType(DesktopExtension.class);
             JvmApplication application = desktop.getApplication();
@@ -37,7 +38,6 @@ public final class ComposeSupport {
             wireNativeDistribution(composeModel.getNativeDistributions(), nativeDistributions);
 
             // Need to set the main class for the JVM run task in the KMP model from the one nested in the Compose model
-            // TODO: default this
             KotlinMultiplatformExtension kotlin = project.getExtensions().getByType(KotlinMultiplatformExtension.class);
             kotlin.jvm("jvm" , jvm -> {
                 jvm.mainRun(kotlinJvmRunDsl -> {
@@ -57,7 +57,8 @@ public final class ComposeSupport {
         Proguard proguardModel = buildTypeModel.getProguard();
         proguard.getOptimize().set(proguardModel.getOptimize());
         proguard.getObfuscate().set(proguardModel.getObfuscate());
-        proguard.getConfigurationFiles().setFrom(proguardModel.getConfigurationFiles());
+
+        proguardModel.getConfigurationFiles().get().forEach(f -> proguard.getConfigurationFiles().from(f));
     }
 
     private static void wireNativeDistribution(NativeDistributions nativeDistributionsModel, JvmApplicationDistributions nativeDistributions) {
@@ -68,9 +69,9 @@ public final class ComposeSupport {
         nativeDistributions.setDescription(nativeDistributionsModel.getDescription().get());
         nativeDistributions.setVendor(nativeDistributionsModel.getVendor().get());
         nativeDistributions.setCopyright(nativeDistributionsModel.getCopyrightYear().map(y -> "© " + y + " the original author or authors.").get());
-        nativeDistributions.getAppResourcesRootDir().set(nativeDistributionsModel.getAppResourcesRootDir());
+        nativeDistributions.getAppResourcesRootDir().set(nativeDistributionsModel.getAppResourcesRootDir().get());
 
-        nativeDistributions.setModules(nativeDistributionsModel.getModules().stream().map(Module::getName).collect(Collectors.toCollection(ArrayList::new)));
+        nativeDistributions.setModules(new ArrayList<>(nativeDistributionsModel.getModules().get()));
     
         wireLinux(nativeDistributionsModel.getLinux(), nativeDistributions.getLinux());
         wireMacOS(nativeDistributionsModel.getMacOS(), nativeDistributions.getMacOS());

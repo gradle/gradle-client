@@ -65,7 +65,7 @@ desktopComposeApp {
                         // But we can determine the value of this string at runtime and just hardcode it
                         implementation("org.jetbrains.compose.ui:ui-test-junit4:1.6.11")
 
-                        runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
+                        runtimeOnly("org.junit.vintage:junit-vintage-engine:5.12.0")
                     }
                 }
             }

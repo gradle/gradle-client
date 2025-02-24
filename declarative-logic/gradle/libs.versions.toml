@@ -1,6 +1,6 @@
 [versions]
 compose-plugin = "1.6.11"
-declarative = "0.1.38"
+declarative = "0.1.40"
 detekt = "1.23.6"
 kotlin = "2.0.21"
 sqldelight = "2.0.2"

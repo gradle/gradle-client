@@ -61,8 +61,6 @@ desktopComposeApp {
 
                 testing {
                     dependencies {
-                        implementation("junit:junit:4.13.2") // TODO: Unnecessary?
-
                         // TODO: Compose doesn't play well with DCL SoftwareTypes
                         // But we can determine the value of this string at runtime and just hardcode it
                         implementation("org.jetbrains.compose.ui:ui-test-junit4:1.6.11")

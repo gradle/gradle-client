@@ -121,7 +121,7 @@ desktopComposeApp {
             packageName = "GradleClient"
             packageVersion = "1.1.3"
             description = "Gradle Client"
-            vendor = "Gradle"
+            vendor = "Gradle, Inc."
             // TODO:DCL We need to be able to add default imports in order to do: copyrightYear = Year.now()
             copyrightYear = "2025"
             appResourcesRootDir = layout.projectDirectory.dir("src/assets")

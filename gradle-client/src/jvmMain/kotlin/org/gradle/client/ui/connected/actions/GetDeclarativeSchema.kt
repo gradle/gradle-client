@@ -62,14 +62,14 @@ class GetDeclarativeSchema : GetModelAction<DeclarativeSchemaModel> {
             val type = when (typeRef) {
                 is DataTypeRef.Type -> typeRef.dataType
                 is DataTypeRef.Name -> schema.dataClassFor(typeRef)
-                else -> error("unexpected data type ref: $typeRef")
+                is DataTypeRef.NameWithArgs -> schema.dataClassFor(typeRef)
             }
             if (type is DataClass) {
                 type.properties.forEach { property ->
                     val propTypeName = when (val propType = property.valueType) {
                         is DataTypeRef.Type -> propType.dataType.toString()
                         is DataTypeRef.Name -> propType.toHumanReadable()
-                        else -> error("unexpected property type: $propType")
+                        is DataTypeRef.NameWithArgs -> propType.toHumanReadable()
                     }
                     append(indentChars.repeat(indentLevel + 1))
                     append("${property.name}: $propTypeName")

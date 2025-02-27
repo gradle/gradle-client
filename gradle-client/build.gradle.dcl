@@ -82,7 +82,7 @@ desktopComposeApp {
 
     detekt {
         source = listOf(layout.projectDirectory.dir("src/jvmMain/kotlin"), layout.projectDirectory.dir("src/jvmTest/kotlin"))
-        config = listOf(layout.projectDirectory.file("../gradle/detekt/detekt.conf"))
+        config = listOf(layout.settingsDirectory.file("gradle/detekt/detekt.conf"))
         parallel = true
     }
 

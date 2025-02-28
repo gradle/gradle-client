@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public final class ComposeSupport {
     private ComposeSupport() { /* not instantiable */ }
 
-    public static void wireCompose(Project project, CustomDesktopComposeApplication dslModel) {
+    public static void wireCompose(Project project, CustomDesktopComposeApplication projectDefinition) {
         project.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
 
         project.afterEvaluate(p -> {
@@ -29,71 +29,71 @@ public final class ComposeSupport {
             JvmApplication application = desktop.getApplication();
             JvmApplicationDistributions nativeDistributions = application.getNativeDistributions();
 
-            Compose composeModel = dslModel.getCompose();
-            application.setMainClass(composeModel.getMainClass().get());
-            composeModel.getJvmArgs().forEach(jvmArg -> application.getJvmArgs().add(jvmArg.getName() + jvmArg.getValue().get()));
+            Compose composeDefinition = projectDefinition.getCompose();
+            application.setMainClass(composeDefinition.getMainClass().get());
+            composeDefinition.getJvmArgs().forEach(jvmArg -> application.getJvmArgs().add(jvmArg.getName() + jvmArg.getValue().get()));
 
-            wireBuildTypes(composeModel, application.getBuildTypes());
+            wireBuildTypes(composeDefinition, application.getBuildTypes());
 
-            wireNativeDistribution(composeModel.getNativeDistributions(), nativeDistributions);
+            wireNativeDistribution(composeDefinition.getNativeDistributions(), nativeDistributions);
 
             // Need to set the main class for the JVM run task in the KMP model from the one nested in the Compose model
             KotlinMultiplatformExtension kotlin = project.getExtensions().getByType(KotlinMultiplatformExtension.class);
             kotlin.jvm("jvm" , jvm -> {
                 jvm.mainRun(kotlinJvmRunDsl -> {
-                    kotlinJvmRunDsl.getMainClass().set(composeModel.getMainClass());
+                    kotlinJvmRunDsl.getMainClass().set(composeDefinition.getMainClass());
                     return Unit.INSTANCE;
                 });
             });
         });
     }
 
-    private static void wireBuildTypes(Compose composeModel, JvmApplicationBuildTypes buildTypes) {
-        wireBuildType(composeModel.getBuildTypes().getRelease(), buildTypes.getRelease());
+    private static void wireBuildTypes(Compose composeDefinition, JvmApplicationBuildTypes buildTypes) {
+        wireBuildType(composeDefinition.getBuildTypes().getRelease(), buildTypes.getRelease());
     }
 
-    private static void wireBuildType(BuildType buildTypeModel, JvmApplicationBuildType buildType) {
+    private static void wireBuildType(BuildType buildTypeDefinition, JvmApplicationBuildType buildType) {
         ProguardSettings proguard = buildType.getProguard();
-        Proguard proguardModel = buildTypeModel.getProguard();
-        proguard.getOptimize().set(proguardModel.getOptimize());
-        proguard.getObfuscate().set(proguardModel.getObfuscate());
+        Proguard proguardDefinition = buildTypeDefinition.getProguard();
+        proguard.getOptimize().set(proguardDefinition.getOptimize());
+        proguard.getObfuscate().set(proguardDefinition.getObfuscate());
 
-        proguardModel.getConfigurationFiles().get().forEach(f -> proguard.getConfigurationFiles().from(f));
+        proguardDefinition.getConfigurationFiles().get().forEach(f -> proguard.getConfigurationFiles().from(f));
     }
 
-    private static void wireNativeDistribution(NativeDistributions nativeDistributionsModel, JvmApplicationDistributions nativeDistributions) {
-        nativeDistributions.setTargetFormats(EnumSet.copyOf(nativeDistributionsModel.getTargetFormats().get().stream().map(TargetFormat::valueOf).collect(Collectors.toList())));
+    private static void wireNativeDistribution(NativeDistributions nativeDistributionsDefinition, JvmApplicationDistributions nativeDistributions) {
+        nativeDistributions.setTargetFormats(EnumSet.copyOf(nativeDistributionsDefinition.getTargetFormats().get().stream().map(TargetFormat::valueOf).collect(Collectors.toList())));
 
-        nativeDistributions.setPackageName(nativeDistributionsModel.getPackageName().get());
-        nativeDistributions.setPackageVersion(nativeDistributionsModel.getPackageVersion().get());
-        nativeDistributions.setDescription(nativeDistributionsModel.getDescription().get());
-        nativeDistributions.setVendor(nativeDistributionsModel.getVendor().get());
-        nativeDistributions.setCopyright(nativeDistributionsModel.getCopyrightYear().map(y -> "© " + y + " the original author or authors.").get());
-        nativeDistributions.getAppResourcesRootDir().set(nativeDistributionsModel.getAppResourcesRootDir().get());
+        nativeDistributions.setPackageName(nativeDistributionsDefinition.getPackageName().get());
+        nativeDistributions.setPackageVersion(nativeDistributionsDefinition.getPackageVersion().get());
+        nativeDistributions.setDescription(nativeDistributionsDefinition.getDescription().get());
+        nativeDistributions.setVendor(nativeDistributionsDefinition.getVendor().get());
+        nativeDistributions.setCopyright(nativeDistributionsDefinition.getCopyrightYear().map(y -> "© " + y + " the original author or authors.").get());
+        nativeDistributions.getAppResourcesRootDir().set(nativeDistributionsDefinition.getAppResourcesRootDir().get());
 
-        nativeDistributions.setModules(new ArrayList<>(nativeDistributionsModel.getModules().get()));
+        nativeDistributions.setModules(new ArrayList<>(nativeDistributionsDefinition.getModules().get()));
     
-        wireLinux(nativeDistributionsModel.getLinux(), nativeDistributions.getLinux());
-        wireMacOS(nativeDistributionsModel.getMacOS(), nativeDistributions.getMacOS());
-        wireWindows(nativeDistributionsModel.getWindows(), nativeDistributions.getWindows());
+        wireLinux(nativeDistributionsDefinition.getLinux(), nativeDistributions.getLinux());
+        wireMacOS(nativeDistributionsDefinition.getMacOS(), nativeDistributions.getMacOS());
+        wireWindows(nativeDistributionsDefinition.getWindows(), nativeDistributions.getWindows());
     }
 
-    private static void wireWindows(Windows windowsModel, WindowsPlatformSettings windows) {
-        windows.setMenu(windowsModel.getMenu().get());
-        windows.setMenuGroup(windowsModel.getMenuGroup().get());
-        windows.setPerUserInstall(windowsModel.getPerUserInstall().get());
-        windows.setUpgradeUuid(windowsModel.getUpgradeUuid().get().trim());
-        windows.getIconFile().set(windowsModel.getIconFile());
+    private static void wireWindows(Windows windowsDefinition, WindowsPlatformSettings windows) {
+        windows.setMenu(windowsDefinition.getMenu().get());
+        windows.setMenuGroup(windowsDefinition.getMenuGroup().get());
+        windows.setPerUserInstall(windowsDefinition.getPerUserInstall().get());
+        windows.setUpgradeUuid(windowsDefinition.getUpgradeUuid().get().trim());
+        windows.getIconFile().set(windowsDefinition.getIconFile());
     }
 
-    private static void wireMacOS(MacOS macOSModel, JvmMacOSPlatformSettings macOS) {
-        macOS.setAppStore(macOSModel.getAppStore().get());
-        macOS.setBundleID(macOSModel.getBundleID().get());
-        macOS.setDockName(macOSModel.getDockName().get());
-        macOS.getIconFile().set(macOSModel.getIconFile());
+    private static void wireMacOS(MacOS macOSDefinition, JvmMacOSPlatformSettings macOS) {
+        macOS.setAppStore(macOSDefinition.getAppStore().get());
+        macOS.setBundleID(macOSDefinition.getBundleID().get());
+        macOS.setDockName(macOSDefinition.getDockName().get());
+        macOS.getIconFile().set(macOSDefinition.getIconFile());
     }
 
-    private static void wireLinux(Linux linuxModel, LinuxPlatformSettings linux) {
-        linux.getIconFile().set(linuxModel.getIconFile());
+    private static void wireLinux(Linux linuxDefinition, LinuxPlatformSettings linux) {
+        linux.getIconFile().set(linuxDefinition.getIconFile());
     }
 }

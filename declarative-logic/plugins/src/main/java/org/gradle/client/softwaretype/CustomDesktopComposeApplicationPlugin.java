@@ -18,16 +18,16 @@ public abstract class CustomDesktopComposeApplicationPlugin implements Plugin<Pr
 
     @Override
     public void apply(Project project) {
-        CustomDesktopComposeApplication dslModel = getDesktopComposeApp();
+        CustomDesktopComposeApplication projectDefinition = getDesktopComposeApp();
 
-        wireKMPApplication(project, dslModel.getKotlinApplication());
+        wireKMPApplication(project, projectDefinition.getKotlinApplication());
         project.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
 
-        wireProjectVersionInfo(project, dslModel);
+        wireProjectVersionInfo(project, projectDefinition);
 
-        wireDetekt(project, dslModel.getDetekt());
-        wireSqlDelight(project, dslModel);
-        wireCompose(project, dslModel);
+        wireDetekt(project, projectDefinition);
+        wireSqlDelight(project, projectDefinition);
+        wireCompose(project, projectDefinition);
     }
 
     private static void wireProjectVersionInfo(Project project, CustomDesktopComposeApplication dslModel) {

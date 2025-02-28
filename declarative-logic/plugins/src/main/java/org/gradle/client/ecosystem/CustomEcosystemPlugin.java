@@ -9,5 +9,5 @@ import org.gradle.client.softwaretype.CustomDesktopComposeApplicationPlugin;
 @RegistersSoftwareTypes({CustomDesktopComposeApplicationPlugin.class})
 public abstract class CustomEcosystemPlugin implements Plugin<Settings> {
     @Override
-    public void apply(Settings target) {}
+    public void apply(Settings settings) {}
 }

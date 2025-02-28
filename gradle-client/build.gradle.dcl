@@ -43,8 +43,6 @@ desktopComposeApp {
 
                     runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
 
-                    // TODO:DCL Compose doesn't play well with DCL SoftwareTypes
-                    // But we can determine the value of these strings at runtime and just hardcode them
                     implementation("org.jetbrains.compose.runtime:runtime:1.6.11")
                     implementation("org.jetbrains.compose.foundation:foundation:1.6.11")
                     implementation("org.jetbrains.compose.material3:material3:1.6.11")
@@ -57,8 +55,6 @@ desktopComposeApp {
 
                 testing {
                     dependencies {
-                        // TODO:DCL Compose doesn't play well with DCL SoftwareTypes
-                        // But we can determine the value of this string at runtime and just hardcode it
                         implementation("org.jetbrains.compose.ui:ui-test-junit4:1.6.11")
 
                         runtimeOnly("org.junit.vintage:junit-vintage-engine:5.12.0")
@@ -89,7 +85,6 @@ desktopComposeApp {
     compose {
         mainClass = "org.gradle.client.GradleClientMainKt"
 
-        // TODO:DCL This could use a map model when one is available in DCL
         jvmArgs {
             jvmArg("-Xms") {
                 value = "35m"
@@ -115,13 +110,11 @@ desktopComposeApp {
         }
 
         nativeDistributions {
-            // TODO:DCL Soon, we will be able to use unqualified enums in a list in DCL, but not yet
             targetFormats = listOf("Dmg", "Msi", "Deb")
 
             packageName = "GradleClient"
             description = "Gradle Client"
             vendor = "Gradle, Inc."
-            // TODO:DCL We need to be able to add default imports in order to do: copyrightYear = Year.now()
             copyrightYear = "2025"
             appResourcesRootDir = layout.projectDirectory.dir("src/assets")
 

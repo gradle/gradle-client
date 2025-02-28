@@ -151,7 +151,7 @@ desktopComposeApp {
                 menuGroup = "" // root
                 perUserInstall = true
                 // https://wixtoolset.org/documentation/manual/v3/howtos/general/generate_guids.html
-                upgradeUuidFile = layout.projectDirectory.file("app-uuid.txt")
+                upgradeUuid = "4E2A8498-9C66-4787-B063-AA7EA569FE99"
                 iconFile = layout.projectDirectory.file("src/assets/desktop/icon.ico")
             }
         }

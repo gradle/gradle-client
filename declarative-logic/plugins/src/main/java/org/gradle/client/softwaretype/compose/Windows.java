@@ -18,5 +18,5 @@ public interface Windows {
     Property<Boolean> getPerUserInstall();
 
     @Restricted
-    RegularFileProperty getUpgradeUuidFile();
+    Property<String> getUpgradeUuid();
 }

@@ -82,15 +82,7 @@ public final class ComposeSupport {
         windows.setMenu(windowsModel.getMenu().get());
         windows.setMenuGroup(windowsModel.getMenuGroup().get());
         windows.setPerUserInstall(windowsModel.getPerUserInstall().get());
-
-        String uuid;
-        try {
-            uuid = Files.readString(windowsModel.getUpgradeUuidFile().getAsFile().get().toPath()).trim();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        windows.setUpgradeUuid(uuid);
-
+        windows.setUpgradeUuid(windowsModel.getUpgradeUuid().get().trim());
         windows.getIconFile().set(windowsModel.getIconFile());
     }
 

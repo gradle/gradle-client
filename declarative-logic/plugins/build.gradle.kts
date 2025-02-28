@@ -1,4 +1,3 @@
-
 plugins {
     id("java-gradle-plugin")
 }
@@ -27,9 +26,4 @@ gradlePlugin {
             implementationClass = "org.gradle.client.softwaretype.CustomDesktopComposeApplicationPlugin"
         }
     }
-}
-
-// move this to daemon toolchain once Gradle supports it
-require(JavaVersion.current() == JavaVersion.VERSION_17) {
-    "This build requires Java 17, currently using ${JavaVersion.current()}"
 }

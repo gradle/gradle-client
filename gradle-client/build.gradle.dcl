@@ -119,7 +119,6 @@ desktopComposeApp {
             targetFormats = listOf("Dmg", "Msi", "Deb")
 
             packageName = "GradleClient"
-            packageVersion = "1.1.3"
             description = "Gradle Client"
             vendor = "Gradle, Inc."
             // TODO:DCL We need to be able to add default imports in order to do: copyrightYear = Year.now()

@@ -2,7 +2,7 @@ package org.gradle.client.softwaretype.compose;
 
 import kotlin.Unit;
 import org.gradle.api.Project;
-import org.gradle.api.file.RegularFile;
+import org.gradle.api.provider.Provider;
 import org.gradle.client.softwaretype.CustomDesktopComposeApplication;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
@@ -10,8 +10,6 @@ import org.jetbrains.compose.desktop.application.dsl.*;
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat;
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
@@ -21,6 +19,8 @@ public final class ComposeSupport {
 
     public static void wireCompose(Project project, CustomDesktopComposeApplication projectDefinition) {
         project.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
+
+        projectDefinition.getCompose().getNativeDistributions().getPackageVersion().convention(projectDefinition.getVersion());
 
         project.afterEvaluate(p -> {
             project.getPluginManager().apply("org.jetbrains.compose");

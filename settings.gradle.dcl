@@ -3,14 +3,6 @@ pluginManagement {
 
     repositories {
         gradlePluginPortal()
-        /*
-            // TOOD: can't filter content searched in repo in DCL yet
-            content {
-                includeGroupAndSubgroups("com.gradle")
-                includeGroupAndSubgroups("org.gradle")
-                includeGroupAndSubgroups("io.github.gradle")
-            }
-        */
         mavenCentral()
     }
 }
@@ -29,39 +21,13 @@ dependencyResolutionManagement {
     repositoriesMode = FAIL_ON_PROJECT_REPOS
     repositories {
         google()
-        /*
-            // TOOD: can't filter content searched in repo in DCL yet
-            content {
-                includeGroupAndSubgroups("androidx")
-                includeGroupAndSubgroups("com.android")
-                includeGroupAndSubgroups("com.google")
-            }
-        */
         gradlePluginPortal()
-        /*
-            // TOOD: can't filter content searched in repo in DCL yet
-            content {
-                includeGroupAndSubgroups("org.gradle")
-            }
-        */
         maven {
             url = uri("https://repo.gradle.org/gradle/libs-releases")
         }
-        /*
-            // TOOD: can't filter content searched in repo in DCL yet
-            content {
-                includeGroup("org.gradle")
-            }
-        */
         maven {
             url = uri("https://repo.gradle.org/gradle/libs-snapshots")
         }
-        /*
-            // TOOD: can't filter content searched in repo in DCL yet
-            content {
-                includeGroup("org.gradle")
-            }
-        */
         mavenCentral()
     }
 }

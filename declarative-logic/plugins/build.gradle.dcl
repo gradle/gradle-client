@@ -11,14 +11,14 @@ javaGradlePlugin {
         api("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.6")
     }
 
-    gradlePlugins {
-        gradlePlugin("custom-ecosystem") {
-            id = "org.gradle.client.ecosystem.custom-ecosystem"
+    registers {
+        id("org.gradle.client.ecosystem.custom-ecosystem") {
+            description = "A custom ecosystem plugin registering the Software Type plugins provided by this project"
             implementationClass = "org.gradle.client.ecosystem.CustomEcosystemPlugin"
         }
 
-        gradlePlugin("desktop-compose-application") {
-            id = "org.gradle.client.softwaretype.desktop-compose-application"
+        id("org.gradle.client.softwaretype.desktop-compose-application") {
+            description = "A custom software type for the Gradle Client's desktop Compose application"
             implementationClass = "org.gradle.client.softwaretype.CustomDesktopComposeApplicationPlugin"
         }
     }

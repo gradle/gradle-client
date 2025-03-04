@@ -24,7 +24,6 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
 class GradleClientUiTest : AbstractUiTest() {
-
     @Test
     fun gradleClientTest() = runTest {
         runDesktopComposeUiTest(800, 600) {
@@ -123,7 +122,9 @@ class GradleClientUiTest : AbstractUiTest() {
                 advanceUntilIdle()
                 onNodeWithText("Root Project Name: some-root").assertIsDisplayed()
                 takeScreenshot("model")
-
+            } catch (e: Throwable) {
+                takeScreenshot("exception")
+                throw e
             } finally {
                 lifecycle.destroy()
                 sqlDriverFactory.stopDriver(sqlDriver)

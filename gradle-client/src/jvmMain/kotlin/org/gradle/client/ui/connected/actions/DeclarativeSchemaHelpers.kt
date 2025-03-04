@@ -23,12 +23,14 @@ val DataProperty.typeName: String
     get() = when (val propType = valueType) {
         is DataTypeRef.Type -> propType.dataType.toString()
         is DataTypeRef.Name -> propType.toHumanReadable()
+        else -> error("unexpected property type: $propType")
     }
 
 fun DataTypeRef.toHumanReadable(): String =
     when (this) {
         is DataTypeRef.Name -> fqName.simpleName
         is DataTypeRef.Type -> toHumanReadable()
+        else -> error("unexpected property type: $this")
     }
 
 fun DataTypeRef.Type.toHumanReadable(): String =
@@ -37,6 +39,7 @@ fun DataTypeRef.Type.toHumanReadable(): String =
         is DataType.UnitType -> Unit::class.simpleName!!
         is DataType.ConstantType<*> -> type.toString()
         is DataType.ClassDataType -> type.name.simpleName
+        else -> error("unexpected property type: $this")
     }
 
 fun DataParameter.toHumanReadable(): String =

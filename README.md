@@ -130,6 +130,15 @@ Building release distributables will fail if the required JDK tools are not avai
 
 To add more actions start from [GetModelAction.kt](./gradle-client/src/jvmMain/kotlin/org/gradle/client/ui/connected/actions/GetModelAction.kt).
 
+To test changes to the [Declarative Gradle Prototype plugins](https://github.com/gradle/declarative-gradle) (which this project uses) simultaneously, check out that project to a sibling directory of this project.
+Then include the following in the `pluginManagement` block in the root `settings.gradle.kts` file:
+
+```
+includeBuild("../declarative-gradle/unified-prototype/unified-plugin")
+```
+
+Now you can test changes to the `id("org.gradle.experimental.kmp-ecosystem")` plugin applied to this one.
+
 ## Packaging Gradle Client
 
 Packaging native distributions is platform dependent.

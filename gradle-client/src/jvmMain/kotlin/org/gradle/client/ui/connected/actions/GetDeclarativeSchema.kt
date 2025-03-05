@@ -46,7 +46,7 @@ class GetDeclarativeSchema : GetModelAction<DeclarativeSchemaModel> {
 
     private val indentChars = "    "
     
-    @Suppress("NestedBlockDepth")
+    @Suppress("NestedBlockDepth", "CyclomaticComplexMethod")
     private fun StringBuilder.appendDescription(
         visitedFunctions: MutableSet<SchemaMemberFunction>,
         schema: AnalysisSchema,
@@ -62,12 +62,14 @@ class GetDeclarativeSchema : GetModelAction<DeclarativeSchemaModel> {
             val type = when (typeRef) {
                 is DataTypeRef.Type -> typeRef.dataType
                 is DataTypeRef.Name -> schema.dataClassFor(typeRef)
+                else -> error("unexpected data type ref: $typeRef")
             }
             if (type is DataClass) {
                 type.properties.forEach { property ->
                     val propTypeName = when (val propType = property.valueType) {
                         is DataTypeRef.Type -> propType.dataType.toString()
                         is DataTypeRef.Name -> propType.toHumanReadable()
+                        else -> error("unexpected property type: $propType")
                     }
                     append(indentChars.repeat(indentLevel + 1))
                     append("${property.name}: $propTypeName")

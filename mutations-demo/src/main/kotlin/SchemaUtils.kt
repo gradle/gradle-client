@@ -11,6 +11,7 @@ internal fun AnalysisSchema.typeByFqn(name: String): DataClass {
     return when (type) {
         is DataClass -> type
         is EnumClass -> error("$name is an enum class, expected a data class")
+        else -> error("$name is not a data class")
     }
 }
 

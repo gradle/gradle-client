@@ -39,9 +39,6 @@ object MutationUtils {
         registerMutationDefinition(SetJavaVersion)
         addTestingDependencyMutations.forEach(::registerMutationDefinition)
         
-        // Kotlin/JVM
-        registerMutationDefinition(EnableKotlinLintMutation)
-        
         // KMP
         kmpAddTargetMutations.forEach(::registerMutationDefinition)
         kmpAddDependencyMutations.forEach(::registerMutationDefinition)

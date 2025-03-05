@@ -1,11 +1,16 @@
 package org.gradle.client.ui.connected.actions
 
 import org.gradle.declarative.dsl.schema.*
-import kotlin.reflect.KClass
 
 fun AnalysisSchema.dataClassFor(typeRef: DataTypeRef.Name): DataClass =
-    dataClassTypesByFqName.getValue(typeRef.fqName) as? DataClass 
-        ?: error("unexpected type for $typeRef")
+    dataClass(typeRef.fqName)
+
+fun AnalysisSchema.dataClassFor(typeRef: DataTypeRef.NameWithArgs): DataClass =
+    dataClass(typeRef.fqName)
+
+private fun AnalysisSchema.dataClass(fqName: FqName) =
+    (dataClassTypesByFqName.getValue(fqName) as? DataClass
+        ?: error("unexpected type for $fqName"))
 
 val AnalysisSchema.softwareTypes: List<SchemaMemberFunction>
     get() = topLevelReceiverType.memberFunctions
@@ -23,14 +28,14 @@ val DataProperty.typeName: String
     get() = when (val propType = valueType) {
         is DataTypeRef.Type -> propType.dataType.toString()
         is DataTypeRef.Name -> propType.toHumanReadable()
-        else -> error("unexpected property type: $propType")
+        is DataTypeRef.NameWithArgs -> propType.toHumanReadable()
     }
 
 fun DataTypeRef.toHumanReadable(): String =
     when (this) {
         is DataTypeRef.Name -> fqName.simpleName
         is DataTypeRef.Type -> toHumanReadable()
-        else -> error("unexpected property type: $this")
+        is DataTypeRef.NameWithArgs -> "${fqName.simpleName}<${typeArguments.joinToString()}>"
     }
 
 fun DataTypeRef.Type.toHumanReadable(): String =
@@ -39,7 +44,7 @@ fun DataTypeRef.Type.toHumanReadable(): String =
         is DataType.UnitType -> Unit::class.simpleName!!
         is DataType.ConstantType<*> -> type.toString()
         is DataType.ClassDataType -> type.name.simpleName
-        else -> error("unexpected property type: $this")
+        is DataType.TypeVariableUsage -> "generic-type-${type.variableId}"
     }
 
 fun DataParameter.toHumanReadable(): String =

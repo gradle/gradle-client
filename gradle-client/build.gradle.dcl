@@ -51,6 +51,8 @@ desktopComposeApp {
                     implementation("org.jetbrains.compose.components:components-resources:1.6.11")
                     implementation("org.jetbrains.compose.components:components-ui-tooling-preview:1.6.11")
                     implementation("org.jetbrains.compose.desktop:desktop-jvm-macos-arm64:1.6.11")
+                    implementation("org.jetbrains.compose.desktop:desktop-jvm-linux-x64:1.6.11")
+                    implementation("org.jetbrains.compose.desktop:desktop-jvm-windows-x64:1.6.11")
                 }
 
                 testing {

@@ -37,9 +37,9 @@ desktopComposeApp {
                     implementation("org.slf4j:slf4j-api:2.0.14")
                     implementation("ch.qos.logback:logback-classic:1.5.6")
 
-                    implementation("org.gradle:gradle-declarative-dsl-core:8.14-20250222002553+0000")
-                    implementation("org.gradle:gradle-declarative-dsl-evaluator:8.14-20250222002553+0000")
-                    implementation("org.gradle:gradle-declarative-dsl-tooling-models:8.14-20250222002553+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-core:8.14-milestone-4")
+                    implementation("org.gradle:gradle-declarative-dsl-evaluator:8.14-milestone-4")
+                    implementation("org.gradle:gradle-declarative-dsl-tooling-models:8.14-milestone-4")
 
                     runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
 
@@ -51,6 +51,8 @@ desktopComposeApp {
                     implementation("org.jetbrains.compose.components:components-resources:1.6.11")
                     implementation("org.jetbrains.compose.components:components-ui-tooling-preview:1.6.11")
                     implementation("org.jetbrains.compose.desktop:desktop-jvm-macos-arm64:1.6.11")
+                    implementation("org.jetbrains.compose.desktop:desktop-jvm-linux-x64:1.6.11")
+                    implementation("org.jetbrains.compose.desktop:desktop-jvm-windows-x64:1.6.11")
                 }
 
                 testing {

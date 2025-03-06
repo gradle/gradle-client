@@ -11,13 +11,6 @@ interface KotlinPrototypeMutationDefinition : MutationDefinition {
         projectAnalysisSchema.hasKotlinPrototype()
 }
 
-object EnableKotlinLintMutation :
-    EnableLintMutation({ kotlinJvmLibrary }, { kotlinJvmLibraryLint }, { lintEnabled }),
-    KotlinPrototypeMutationDefinition {
-
-    override val id: String = "org.gradle.client.demo.mutations.lintEnable.kotlinJvm"
-}
-
 
 class AddKotlinTargetMutation(
     owner: String,

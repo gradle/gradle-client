@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import org.gradle.client.build.action.GetResolvedDomAction
@@ -189,7 +190,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                 buildFileId,
                 buildFileContent,
                 relevantIndicesRange = null, // we are interested in the whole project file content
-                highlightedSourceRange = viewModel.highlightedSourceRangeByFileId.value[buildFileId],
+                highlightedSourceRangeAndColor = viewModel.highlightedSourceRangeByFileId.value[buildFileId],
                 errorRanges = buildErrorRanges
             ),
             SourceFileViewInput(
@@ -197,7 +198,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                 settingsFileContent,
                 // Trim the settings file to just the part that contributed the relevant conventions:
                 relevantIndicesRange = domWithDefaults.inputUnderlay.document.relevantRange(),
-                highlightedSourceRange = viewModel.highlightedSourceRangeByFileId.value[settingsFileId],
+                highlightedSourceRangeAndColor = viewModel.highlightedSourceRangeByFileId.value[settingsFileId],
                 errorRanges = settingsErrorRanges
             ).takeIf { !viewModel.isViewingSettings() && hasAnyModelDefaultsContent },
         )
@@ -212,7 +213,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
             if (clickedNode == null) {
                 viewModel.clearHighlighting()
             } else {
-                viewModel.setHighlightingRanges(fileIdentifier to clickedNode.sourceData.indexRange)
+                viewModel.setHighlightingRanges(fileIdentifier to (clickedNode.sourceData.indexRange to Color.Green))
             }
         }
     }

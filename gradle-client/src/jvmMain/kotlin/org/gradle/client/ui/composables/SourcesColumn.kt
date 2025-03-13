@@ -26,7 +26,7 @@ internal data class SourceFileViewInput(
     val fileContent: String,
     val relevantIndicesRange: IntRange?,
     val errorRanges: List<IntRange>,
-    val highlightedSourceRange: IntRange?
+    val highlightedSourceRangeAndColor: Pair<IntRange, Color>?
 )
 
 @Composable
@@ -44,11 +44,11 @@ internal fun SourcesColumn(
         val sourceFileData by derivedStateOf {
             sources.map { sourceFileViewInput ->
                 val identifier = sourceFileViewInput.fileIdentifier
-                val highlightedRangeOrNull = sourceFileViewInput.highlightedSourceRange
+                val highlightedRangeOrAndColor = sourceFileViewInput.highlightedSourceRangeAndColor
                 val relevantIndices = sourceFileViewInput.relevantIndicesRange
 
                 val highlightedString = sourceFileAnnotatedString(
-                    highlightedRangeOrNull,
+                    highlightedRangeOrAndColor,
                     sourceFileViewInput.errorRanges,
                     sourceFileViewInput.fileContent
                 )
@@ -85,14 +85,16 @@ private data class SourceFileData(
 )
 
 private fun sourceFileAnnotatedString(
-    highlightedSourceRange: IntRange?,
+    highlightedRangeAndColor: Pair<IntRange, Color>?,
     errorRanges: List<IntRange>,
     fileContent: String
 ) = buildAnnotatedString {
     append(fileContent)
 
-    if (highlightedSourceRange != null) {
-        addStyle(SpanStyle(background = Color.Yellow), highlightedSourceRange.first, highlightedSourceRange.last + 1)
+    if (highlightedRangeAndColor != null) {
+        val range = highlightedRangeAndColor.first
+        val color = highlightedRangeAndColor.second
+        addStyle(SpanStyle(background = color), range.first, range.last + 1)
     }
 
     for (errorRange in errorRanges) {

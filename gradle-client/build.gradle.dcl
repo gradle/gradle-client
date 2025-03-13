@@ -37,9 +37,9 @@ desktopComposeApp {
                     implementation("org.slf4j:slf4j-api:2.0.14")
                     implementation("ch.qos.logback:logback-classic:1.5.6")
 
-                    implementation("org.gradle:gradle-declarative-dsl-core:8.14-milestone-4")
-                    implementation("org.gradle:gradle-declarative-dsl-evaluator:8.14-milestone-4")
-                    implementation("org.gradle:gradle-declarative-dsl-tooling-models:8.14-milestone-4")
+                    implementation("org.gradle:gradle-declarative-dsl-core:9.0-branch-jb_declarative_dsl_fix_defaults_block_bug-20250312134045+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-evaluator:9.0-branch-jb_declarative_dsl_fix_defaults_block_bug-20250312134045+0000")
+                    implementation("org.gradle:gradle-declarative-dsl-tooling-models:9.0-branch-jb_declarative_dsl_fix_defaults_block_bug-20250312134045+0000")
 
                     runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
 

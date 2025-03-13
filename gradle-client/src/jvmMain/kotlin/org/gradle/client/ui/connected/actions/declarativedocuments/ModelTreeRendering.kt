@@ -232,14 +232,15 @@ internal class ModelTreeRendering(
         val sourceData = propertyNode?.sourceData
         val isHighlighted = sourceData?.indexRange?.let { propRange ->
             highlightingContext.rangeByFileId[sourceData.sourceIdentifier.fileIdentifier]
-                ?.let { highlightedRange ->
+                ?.let { highlightedRangeAndColor ->
+                    val highlightedRange = highlightedRangeAndColor.first
                     propRange.first >= highlightedRange.first && propRange.last <= highlightedRange.last
                 }
         }
         if (isHighlighted == true) {
             Surface(
                 shape = MaterialTheme.shapes.extraSmall,
-                color = Color.Yellow,
+                color = Color.Green,
             ) {
                 content()
             }
@@ -280,17 +281,17 @@ internal fun Modifier.withClickTextRangeSelection(
     if (node == null) {
         highlightingContext.clearHighlighting()
     } else {
-        val ownIdToRange = node.sourceIdentifierToRange()
+        val ownIdToRange = node.sourceIdentifierToRange().let { it.first to (it.second to Color.Green) }
         when (val origin = highlightingContext.overlayOriginContainer.data(node)) {
             is FromOverlay,
             is FromUnderlay -> highlightingContext.setHighlightingRanges(ownIdToRange)
 
             is MergedElements -> highlightingContext.setHighlightingRanges(
-                ownIdToRange, origin.underlayElement.sourceIdentifierToRange()
+                ownIdToRange, origin.underlayElement.sourceIdentifierToRange().let { it.first to (it.second to Color.Green) }
             )
 
             is ShadowedProperty -> highlightingContext.setHighlightingRanges(
-                ownIdToRange, origin.underlayProperty.sourceIdentifierToRange()
+                ownIdToRange, origin.underlayProperty.sourceIdentifierToRange().let { it.first to (it.second to Color.Yellow) }
             )
         }
     }
@@ -300,11 +301,11 @@ internal data class HighlightingContext(
     private val viewModel: GetDeclarativeDocumentsModel,
     val overlayOriginContainer: OverlayOriginContainer,
 ) {
-    val rangeByFileId: Map<String, IntRange>
+    val rangeByFileId: Map<String, Pair<IntRange, Color>>
         get() = viewModel.highlightedSourceRangeByFileId.value
 
     fun clearHighlighting() = viewModel.clearHighlighting()
-    fun setHighlightingRanges(vararg ranges: Pair<String, IntRange>) = viewModel.setHighlightingRanges(*ranges)
+    fun setHighlightingRanges(vararg ranges: Pair<String, Pair<IntRange, Color>>) = viewModel.setHighlightingRanges(*ranges)
 }
 
 private const val NOT_DECLARED = "Not declared"

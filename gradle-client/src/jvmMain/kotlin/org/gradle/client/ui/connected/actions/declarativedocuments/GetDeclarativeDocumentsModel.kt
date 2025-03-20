@@ -1,6 +1,7 @@
 package org.gradle.client.ui.connected.actions.declarativedocuments
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.delay
 import org.gradle.client.build.model.ResolvedDomPrerequisites
 import org.gradle.client.core.gradle.dcl.analyzer
@@ -15,7 +16,7 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
     private val _selectedDocument = mutableStateOf<File>(model.declarativeFiles.first())
     private val selectedFileContent = mutableStateOf(readDocumentFile())
     private val settingsFileContent = mutableStateOf(readSettingsFile())
-    private val _highlightedSourceRangeByFileId = mutableStateOf(mapOf<String, IntRange>())
+    private val _highlightedSourceRangeByFileId = mutableStateOf(listOf<HighlightingEntry>())
     private fun readDocumentFile() = _selectedDocument.value.takeIf { it.canRead() }?.readText().orEmpty()
     private fun readSettingsFile() = model.settingsFile.takeIf { it.canRead() }?.readText().orEmpty()
 
@@ -23,16 +24,16 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
 
     fun isViewingSettings() = selectedDocument.value == model.settingsFile
 
-    val highlightedSourceRangeByFileId: State<Map<String, IntRange>> get() = _highlightedSourceRangeByFileId
+    val highlightedSourceRangeByFileId: State<List<HighlightingEntry>> get() = _highlightedSourceRangeByFileId
 
     fun clearHighlighting() {
-        _highlightedSourceRangeByFileId.value = emptyMap()
+        _highlightedSourceRangeByFileId.value = emptyList()
     }
 
-    fun setHighlightingRanges(vararg fileToRange: Pair<String, IntRange>) {
-        _highlightedSourceRangeByFileId.value = mapOf(*fileToRange)
+    fun setHighlightingRanges(entries: List<HighlightingEntry>) {
+        _highlightedSourceRangeByFileId.value = entries
     }
-    
+
     fun selectDocument(file: File) {
         _selectedDocument.value = file
         updateFileContents()
@@ -81,5 +82,20 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
                 updateFileContents()
             }
         }
+    }
+}
+
+internal data class HighlightingEntry(
+    val fileIdentifier: String,
+    val range: IntRange,
+    val highlightingKind: HighlightingKind,
+)
+
+internal enum class HighlightingKind {
+    EFFECTIVE, SHADOWED;
+
+    fun highlightingColor(): Color = when (this) {
+        EFFECTIVE -> Color.Green    
+        SHADOWED -> Color.Yellow
     }
 }

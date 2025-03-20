@@ -18,9 +18,15 @@ import org.gradle.client.ui.composables.TitleLarge
 import org.gradle.client.ui.composables.TitleMedium
 import org.gradle.client.ui.connected.TwoPanes
 import org.gradle.client.ui.connected.actions.*
+import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingKind.EFFECTIVE
 import org.gradle.client.ui.theme.spacing
+import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.data.collectToMap
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.FromOverlay
+import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.FromUnderlay
+import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.MergedElements
+import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.MergedProperties
+import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayOriginContainer
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils.resolvedDocument
 import org.gradle.internal.declarativedsl.evaluator.runner.stepResultOrPartialResult
 import org.gradle.tooling.BuildAction
@@ -82,6 +88,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
             with(
                 ModelTreeRendering(
                     indexBasedMultiResolutionContainer(listOf(document)),
+                    overlayForJustThisDocument.overlayNodeOriginContainer,
                     highlightingContext,
                     NoApplicableMutationsNodeData()
                 ) { _, _ -> }
@@ -132,6 +139,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
             with(
                 ModelTreeRendering(
                     domWithDefaults.overlayResolutionContainer,
+                    domWithDefaults.overlayNodeOriginContainer,
                     highlightingContext,
                     mutationApplicability,
                     onRunMutation = { mutationDefinition, mutationArgumentsContainer ->
@@ -189,7 +197,8 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                 buildFileId,
                 buildFileContent,
                 relevantIndicesRange = null, // we are interested in the whole project file content
-                highlightedSourceRange = viewModel.highlightedSourceRangeByFileId.value[buildFileId],
+                highlightedSourceRange =
+                    viewModel.highlightedSourceRangeByFileId.value.filter { it.fileIdentifier == buildFileId },
                 errorRanges = buildErrorRanges
             ),
             SourceFileViewInput(
@@ -197,7 +206,8 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                 settingsFileContent,
                 // Trim the settings file to just the part that contributed the relevant conventions:
                 relevantIndicesRange = domWithDefaults.inputUnderlay.document.relevantRange(),
-                highlightedSourceRange = viewModel.highlightedSourceRangeByFileId.value[settingsFileId],
+                highlightedSourceRange =
+                    viewModel.highlightedSourceRangeByFileId.value.filter { it.fileIdentifier == settingsFileId },
                 errorRanges = settingsErrorRanges
             ).takeIf { !viewModel.isViewingSettings() && hasAnyModelDefaultsContent },
         )
@@ -212,10 +222,49 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
             if (clickedNode == null) {
                 viewModel.clearHighlighting()
             } else {
-                viewModel.setHighlightingRanges(fileIdentifier to clickedNode.sourceData.indexRange)
+                viewModel.setHighlightingRanges(
+                    findRelevantNodesAndProduceHighlighting(
+                        clickedNode,
+                        domWithDefaults.document,
+                        domWithDefaults.overlayNodeOriginContainer
+                    ) ?: listOf(clickedNode.highlightAs(EFFECTIVE))
+                )
             }
         }
     }
+
+    private fun findRelevantNodesAndProduceHighlighting(
+        forNode: DeclarativeDocument.DocumentNode,
+        inDocument: DeclarativeDocument,
+        overlayOriginContainer: OverlayOriginContainer
+    ): List<HighlightingEntry>? =
+        overlayOriginContainer.collectToMap(inDocument).entries.firstNotNullOfOrNull { (node, origin) ->
+            when (origin) {
+                is FromOverlay -> if (origin.documentNode == forNode)
+                    highlightingForNodesOf(origin.documentNode, overlayOriginContainer)
+                else null
+
+                is FromUnderlay -> if (origin.documentNode == forNode)
+                    highlightingForNodesOf(origin.documentNode, overlayOriginContainer)
+                else null
+
+                is MergedElements -> if (node is DeclarativeDocument.DocumentNode && (
+                        origin.overlayElement == forNode || origin.underlayElement == forNode)
+                ) highlightingForNodesOf(node, overlayOriginContainer) else null
+
+                is MergedProperties -> origin.run {
+                    if (listOf(
+                            shadowedPropertiesFromUnderlay,
+                            shadowedPropertiesFromOverlay,
+                            effectivePropertiesFromUnderlay,
+                            effectivePropertiesFromOverlay
+                        ).any { forNode in it }
+                    ) (effectivePropertiesFromUnderlay + effectivePropertiesFromOverlay).lastOrNull()
+                        ?.let { highlightingForNodesOf(it, overlayOriginContainer) }
+                    else null
+                }
+            }
+        }
 
     @Composable
     @OptIn(ExperimentalMaterial3Api::class)

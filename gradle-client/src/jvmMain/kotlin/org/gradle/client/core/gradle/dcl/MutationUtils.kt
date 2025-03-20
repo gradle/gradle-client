@@ -21,7 +21,7 @@ object MutationUtils {
         registerMutationDefinition(SetNamespaceMutation)
         registerMutationDefinition(addLibraryDependencyMutation)
         registerMutationDefinition(addApplicationDependencyMutation)
-        
+
         // AGP
         registerMutationDefinition(agpAddDependency)
         registerMutationDefinition(agpAddTestDependency)
@@ -29,16 +29,16 @@ object MutationUtils {
         registerMutationDefinition(enableCompose)
         registerMutationDefinition(addBuildConfigField)
         registerMutationDefinition(setAgpNamespaceMutation)
-        
+
         // Common
         registerMutationDefinition(addCommonLibraryDependencyMutation)
         registerMutationDefinition(addCommonApplicationDependencyMutation)
-        
+
         // Java
         registerMutationDefinition(SetJvmApplicationMainClass)
         registerMutationDefinition(SetJavaVersion)
         addTestingDependencyMutations.forEach(::registerMutationDefinition)
-        
+
         // KMP
         kmpAddTargetMutations.forEach(::registerMutationDefinition)
         kmpAddDependencyMutations.forEach(::registerMutationDefinition)
@@ -112,7 +112,11 @@ internal class OverlayRoutedNodeDataContainer<DNode, DElement : DNode, DProperty
         when (val from = overlayOriginContainer.data(node)) {
             is FromUnderlay -> underlay.data(node)
             is FromOverlay -> overlay.data(node)
-            is ShadowedProperty -> overlay.data(from.overlayProperty)
+            is MergedProperties -> when (node) {
+                in from.effectivePropertiesFromUnderlay -> underlay.data(node)
+                in from.effectivePropertiesFromOverlay -> overlay.data(node)
+                else -> error("expected $node to be in the effective property nodes of the overlay origin $from")
+            }
         }
 
     override fun data(node: DeclarativeDocument.DocumentNode.ErrorNode): DError =

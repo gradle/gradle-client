@@ -18,6 +18,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingEntry
 import org.gradle.client.ui.theme.spacing
 import org.gradle.client.ui.theme.transparency
 
@@ -26,7 +27,7 @@ internal data class SourceFileViewInput(
     val fileContent: String,
     val relevantIndicesRange: IntRange?,
     val errorRanges: List<IntRange>,
-    val highlightedSourceRange: IntRange?
+    val highlightedSourceRange: List<HighlightingEntry>
 )
 
 @Composable
@@ -85,14 +86,14 @@ private data class SourceFileData(
 )
 
 private fun sourceFileAnnotatedString(
-    highlightedSourceRange: IntRange?,
+    highlightedSourceRanges: List<HighlightingEntry>,
     errorRanges: List<IntRange>,
     fileContent: String
 ) = buildAnnotatedString {
     append(fileContent)
 
-    if (highlightedSourceRange != null) {
-        addStyle(SpanStyle(background = Color.Yellow), highlightedSourceRange.first, highlightedSourceRange.last + 1)
+    highlightedSourceRanges.forEach {
+        addStyle(SpanStyle(background = it.highlightingKind.highlightingColor()), it.range.first, it.range.last + 1)
     }
 
     for (errorRange in errorRanges) {

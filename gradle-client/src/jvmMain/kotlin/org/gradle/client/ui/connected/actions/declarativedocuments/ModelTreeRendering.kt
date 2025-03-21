@@ -25,6 +25,8 @@ import org.gradle.client.ui.composables.semiTransparentIfNull
 import org.gradle.client.ui.connected.actions.*
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingKind.EFFECTIVE
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingKind.SHADOWED
+import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingTarget.DOCUMENT_NODE
+import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingTarget.MODEL_NODE
 import org.gradle.client.ui.theme.spacing
 import org.gradle.client.ui.theme.transparency
 import org.gradle.declarative.dsl.schema.DataClass
@@ -48,6 +50,7 @@ import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayOriginCo
 import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionContainer
 import org.jetbrains.skiko.Cursor
 
+@Suppress("TooManyFunctions") // this is a collection of the view `@Composable`s, it is expected to have many functions 
 internal class ModelTreeRendering(
     private val typeRefContext: TypeRefContext,
     private val resolutionContainer: DocumentResolutionContainer,
@@ -203,14 +206,8 @@ internal class ModelTreeRendering(
             return
         }
         val representativeNode = propertyNodes.lastOrNull()
-        val valuePresenter = representativeNode?.run {
-            val propertyTypeRef = (resolutionContainer.data(this) as? PropertyAssignmentResolved)?.property?.valueType
-            if (propertyTypeRef != null) {
-                val propertyType = typeRefContext.resolveRef(propertyTypeRef)
-                supportedJointAssignedValuePresentaters.find { it.supportsPropertyType(propertyType) }
-            } else null
-        }
-        val valuesPresentation = valuePresenter?.jointAssignedValuesPresentation(propertyNodes, resolutionContainer)
+        val valuesPresentation = findValuePresenter(representativeNode)
+            ?.jointAssignedValuesPresentation(propertyNodes, resolutionContainer)
 
         WithDecoration(representativeNode) {
             Column {
@@ -221,21 +218,11 @@ internal class ModelTreeRendering(
                 else TextDecoration.None
 
                 Column(Modifier.padding(start = indentDp)) {
-                    LabelMedium(
-                        modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
-                            .withHoverCursor()
-                            .withClickTextRangeSelection(representativeNode, highlightingContext)
-                            .semiTransparentIfNull(representativeNode),
-                        textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
-                        text = buildString {
-                            append("${property.name}: ${property.typeName}")
-                            if (propertyNodes.size == 1) {
-                                append(representativeNode?.augmentation?.let { if (it == Plus) " +=" else " =" } ?: ":")
-                                append(
-                                    propertyNodes.single().value.sourceData.text().let { " $it" }
-                                )
-                            }
-                        }
+                    PropertyItemHeaderLine(
+                        representativeNode,
+                        maybeInvalidDecoration,
+                        property,
+                        propertyNodes.size > 1
                     )
                     if (propertyNodes.size == 1) {
                         valuesPresentation?.get(representativeNode)?.effectiveValueNodes.orEmpty().forEach {
@@ -244,17 +231,12 @@ internal class ModelTreeRendering(
                     } else {
                         if (propertyNodes.size > 1) {
                             propertyNodes.forEach { propertyNode ->
-                                WithDecoration(propertyNode) {
+                                WithDecoration(propertyNode, highlightingTarget = DOCUMENT_NODE) {
                                     Column {
-                                        LabelMedium(
-                                            modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
-                                                .withHoverCursor()
-                                                .withClickTextRangeSelection(propertyNode, highlightingContext, false)
-                                                .semiTransparentIfNull(representativeNode),
-                                            textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
-                                            text = "${if (propertyNode.augmentation == Plus) "+=" else "="} ${
-                                                propertyNode.value.sourceData.text()
-                                            }"
+                                        PropertyAssignmentOrAugmentationItem(
+                                            propertyNode,
+                                            representativeNode,
+                                            maybeInvalidDecoration
                                         )
                                         valuesPresentation?.get(propertyNode)?.effectiveValueNodes.orEmpty().forEach {
                                             PropertyValueItem(it)
@@ -269,11 +251,63 @@ internal class ModelTreeRendering(
         }
     }
 
+    private fun findValuePresenter(representativeNode: PropertyNode?): ListAssignedValuesPresenter? =
+        representativeNode?.run {
+            val propertyTypeRef = (resolutionContainer.data(this) as? PropertyAssignmentResolved)?.property?.valueType
+            if (propertyTypeRef != null) {
+                val propertyType = typeRefContext.resolveRef(propertyTypeRef)
+                supportedJointAssignedValuePresentaters.find { it.supportsPropertyType(propertyType) }
+            } else null
+        }
+
+    @Composable
+    private fun PropertyItemHeaderLine(
+        representativeNode: PropertyNode?,
+        maybeInvalidDecoration: TextDecoration,
+        property: DataProperty,
+        hasMultiplePropertyNodes: Boolean
+    ) {
+        LabelMedium(
+            modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
+                .withHoverCursor()
+                .withClickTextRangeSelection(representativeNode, highlightingContext)
+                .semiTransparentIfNull(representativeNode),
+            textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
+            text = buildString {
+                append("${property.name}: ${property.typeName}")
+                if (representativeNode != null && !hasMultiplePropertyNodes) {
+                    append(representativeNode.augmentation.let { if (it == Plus) " +=" else " =" })
+                    append(
+                        representativeNode.value.sourceData.text().let { " $it" }
+                    )
+                }
+            }
+        )
+    }
+
+    @Composable
+    private fun PropertyAssignmentOrAugmentationItem(
+        propertyNode: PropertyNode,
+        representativeNode: PropertyNode?,
+        maybeInvalidDecoration: TextDecoration
+    ) {
+        LabelMedium(
+            modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
+                .withHoverCursor()
+                .withClickTextRangeSelection(propertyNode, highlightingContext, false)
+                .semiTransparentIfNull(representativeNode),
+            textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
+            text = "${if (propertyNode.augmentation == Plus) "+=" else "="} ${
+                propertyNode.value.sourceData.text()
+            }"
+        )
+    }
+
     @Composable
     private fun PropertyValueItem(
         node: DeclarativeDocument.ValueNode
     ) {
-        WithDecoration(node) {
+        WithDecoration(node, DOCUMENT_NODE) {
             LabelMedium(
                 modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2, start = indentDp)
                     .withHoverCursor()
@@ -286,10 +320,11 @@ internal class ModelTreeRendering(
     @Composable
     fun WithDecoration(
         node: DeclarativeDocument.Node?,
+        highlightingTarget: HighlightingTarget = MODEL_NODE,
         content: @Composable () -> Unit
     ) {
         WithApplicableMutations(node) {
-            WithModelHighlighting(node) {
+            WithModelHighlighting(node, highlightingTarget) {
                 content()
             }
         }
@@ -298,14 +333,17 @@ internal class ModelTreeRendering(
     @Composable
     private fun WithModelHighlighting(
         node: DeclarativeDocument.Node?,
+        highlightTarget: HighlightingTarget,
         content: @Composable () -> Unit,
     ) {
-        val relevantSourceRanges: List<FileAndRange> = relevantSourceRanges(node)
+        val relevantSourceRanges: List<FileAndRange> = relevantSourceRanges(node, highlightTarget)
 
         val highlightingKind = run {
             fun FileAndRange.matchesHighlightingEntry(highlightingEntry: HighlightingEntry): Boolean =
                 fileId == highlightingEntry.fileIdentifier &&
-                    range.first in highlightingEntry.range && range.last in highlightingEntry.range
+                    range.first in highlightingEntry.range && range.last in highlightingEntry.range &&
+                    highlightingEntry.highlightingTarget.whenSelectedShouldHighlight(highlightTarget) 
+                        
 
             highlightingContext.highlightedRanges.firstOrNull { entry ->
                 relevantSourceRanges.any { it.matchesHighlightingEntry(entry) }
@@ -326,7 +364,14 @@ internal class ModelTreeRendering(
     fun DeclarativeDocument.Node.fileAndRange(): FileAndRange =
         sourceData.run { FileAndRange(sourceIdentifier.fileIdentifier, indexRange) }
 
-    private fun relevantSourceRanges(node: DeclarativeDocument.Node?): List<FileAndRange> {
+    private fun relevantSourceRanges(
+        node: DeclarativeDocument.Node?,
+        highlightingTarget: HighlightingTarget
+    ): List<FileAndRange> {
+        if (highlightingTarget == DOCUMENT_NODE) {
+            return listOfNotNull(node?.fileAndRange())
+        }
+        
         val origin = when (node) {
             is DeclarativeDocument.DocumentNode -> overlayOriginContainer.data(node)
             is DeclarativeDocument.ValueNode -> overlayOriginContainer.data(node)
@@ -384,19 +429,25 @@ internal fun Modifier.withClickTextRangeSelection(
     } else {
         highlightingContext.setHighlightingRanges(
             if (highlightWithOverlay) {
-                highlightingForNodesOf(node, highlightingContext.overlayOriginContainer)
+                highlightingForAllDocumentNodesByModelNode(node, highlightingContext.overlayOriginContainer)
             } else {
-                listOf(node.highlightAs(EFFECTIVE))
+                listOf(node.highlightAs(EFFECTIVE, DOCUMENT_NODE))
             }
         )
     }
 }
 
 internal fun DeclarativeDocument.Node.highlightAs(
-    highlightingKind: HighlightingKind
-) = HighlightingEntry(sourceData.sourceIdentifier.fileIdentifier, sourceData.indexRange, highlightingKind)
+    highlightingKind: HighlightingKind,
+    highlightingTarget: HighlightingTarget,
+) = HighlightingEntry(
+    sourceData.sourceIdentifier.fileIdentifier,
+    sourceData.indexRange,
+    highlightingKind,
+    highlightingTarget
+)
 
-internal fun highlightingForNodesOf(
+internal fun highlightingForAllDocumentNodesByModelNode(
     node: DeclarativeDocument.Node,
     overlayOriginContainer: OverlayOriginContainer
 ): List<HighlightingEntry> {
@@ -406,18 +457,18 @@ internal fun highlightingForNodesOf(
     }
     return when (origin) {
         is FromOverlay,
-        is FromUnderlay -> listOf(node.highlightAs(EFFECTIVE))
+        is FromUnderlay -> listOf(node.highlightAs(EFFECTIVE, MODEL_NODE))
 
         is MergedElements -> listOf(
-            node.highlightAs(EFFECTIVE),
-            origin.underlayElement.highlightAs(EFFECTIVE)
+            node.highlightAs(EFFECTIVE, MODEL_NODE),
+            origin.underlayElement.highlightAs(EFFECTIVE, MODEL_NODE)
         )
 
         is MergedProperties ->
             (origin.effectivePropertiesFromOverlay + origin.effectivePropertiesFromUnderlay).map {
-                it.highlightAs(EFFECTIVE)
+                it.highlightAs(EFFECTIVE, MODEL_NODE)
             } + (origin.shadowedPropertiesFromOverlay + origin.shadowedPropertiesFromUnderlay).map {
-                it.highlightAs(SHADOWED)
+                it.highlightAs(SHADOWED, MODEL_NODE)
             }
     }
 }

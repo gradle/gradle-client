@@ -19,6 +19,7 @@ import org.gradle.client.ui.composables.TitleMedium
 import org.gradle.client.ui.connected.TwoPanes
 import org.gradle.client.ui.connected.actions.*
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingKind.EFFECTIVE
+import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingTarget.DOCUMENT_NODE
 import org.gradle.client.ui.theme.spacing
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.data.collectToMap
@@ -229,7 +230,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                         clickedNode,
                         domWithDefaults.document,
                         domWithDefaults.overlayNodeOriginContainer
-                    ) ?: listOf(clickedNode.highlightAs(EFFECTIVE))
+                    ) ?: listOf(clickedNode.highlightAs(EFFECTIVE, DOCUMENT_NODE))
                 )
             }
         }
@@ -243,16 +244,16 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
         overlayOriginContainer.collectToMap(inDocument).entries.firstNotNullOfOrNull { (node, origin) ->
             when (origin) {
                 is FromOverlay -> if (origin.documentNode == forNode)
-                    highlightingForNodesOf(origin.documentNode, overlayOriginContainer)
+                    highlightingForAllDocumentNodesByModelNode(origin.documentNode, overlayOriginContainer)
                 else null
 
                 is FromUnderlay -> if (origin.documentNode == forNode)
-                    highlightingForNodesOf(origin.documentNode, overlayOriginContainer)
+                    highlightingForAllDocumentNodesByModelNode(origin.documentNode, overlayOriginContainer)
                 else null
 
                 is MergedElements -> if (node is DeclarativeDocument.DocumentNode && (
                         origin.overlayElement == forNode || origin.underlayElement == forNode)
-                ) highlightingForNodesOf(node, overlayOriginContainer) else null
+                ) highlightingForAllDocumentNodesByModelNode(node, overlayOriginContainer) else null
 
                 is MergedProperties -> origin.run {
                     if (listOf(
@@ -262,7 +263,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                             effectivePropertiesFromOverlay
                         ).any { forNode in it }
                     ) (effectivePropertiesFromUnderlay + effectivePropertiesFromOverlay).lastOrNull()
-                        ?.let { highlightingForNodesOf(it, overlayOriginContainer) }
+                        ?.let { highlightingForAllDocumentNodesByModelNode(it, overlayOriginContainer) }
                     else null
                 }
             }

@@ -93,6 +93,7 @@ internal data class HighlightingEntry(
     val fileIdentifier: String,
     val range: IntRange,
     val highlightingKind: HighlightingKind,
+    val highlightingTarget: HighlightingTarget
 )
 
 internal enum class HighlightingKind {
@@ -101,5 +102,23 @@ internal enum class HighlightingKind {
     fun highlightingColor(): Color = when (this) {
         EFFECTIVE -> Color.Green
         SHADOWED -> Color.Yellow
+    }
+}
+
+/**
+ * A user action may result in a request to highlight one of:
+ * * [MODEL_NODE], i.e., the selected entity is a part of the model,
+ *   not some specific document node; in this case, all document nodes
+ *   relevant to that model node should also be highlighted;
+ * * [DOCUMENT_NODE], which means that only the specific document node
+ *   should be highlighted, but not any other document node, even if
+ *   it contributes to the same model node.
+ */
+internal enum class HighlightingTarget {
+    MODEL_NODE, DOCUMENT_NODE;
+
+    fun whenSelectedShouldHighlight(other: HighlightingTarget): Boolean = when (this) {
+        MODEL_NODE -> true
+        DOCUMENT_NODE -> other == DOCUMENT_NODE
     }
 }

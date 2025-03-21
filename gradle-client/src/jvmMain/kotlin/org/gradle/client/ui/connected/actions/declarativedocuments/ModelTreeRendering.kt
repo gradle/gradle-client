@@ -30,6 +30,7 @@ import org.gradle.client.ui.theme.transparency
 import org.gradle.declarative.dsl.schema.DataClass
 import org.gradle.declarative.dsl.schema.DataProperty
 import org.gradle.declarative.dsl.schema.SchemaMemberFunction
+import org.gradle.internal.declarativedsl.analysis.TypeRefContext
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ElementNode
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.PropertyNode
@@ -48,6 +49,7 @@ import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionConta
 import org.jetbrains.skiko.Cursor
 
 internal class ModelTreeRendering(
+    private val typeRefContext: TypeRefContext,
     private val resolutionContainer: DocumentResolutionContainer,
     private val overlayOriginContainer: OverlayOriginContainer,
     private val highlightingContext: HighlightingContext,
@@ -201,6 +203,15 @@ internal class ModelTreeRendering(
             return
         }
         val representativeNode = propertyNodes.lastOrNull()
+        val valuePresenter = representativeNode?.run {
+            val propertyTypeRef = (resolutionContainer.data(this) as? PropertyAssignmentResolved)?.property?.valueType
+            if (propertyTypeRef != null) {
+                val propertyType = typeRefContext.resolveRef(propertyTypeRef)
+                supportedJointAssignedValuePresentaters.find { it.supportsPropertyType(propertyType) }
+            } else null
+        }
+        val valuesPresentation = valuePresenter?.jointAssignedValuesPresentation(propertyNodes, resolutionContainer)
+
         WithDecoration(representativeNode) {
             Column {
                 val maybeInvalidDecoration = if (
@@ -209,37 +220,47 @@ internal class ModelTreeRendering(
                 ) TextDecoration.LineThrough
                 else TextDecoration.None
 
-                LabelMedium(
-                    modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
-                        .withHoverCursor()
-                        .withClickTextRangeSelection(representativeNode, highlightingContext)
-                        .semiTransparentIfNull(representativeNode),
-                    textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
-                    text = buildString {
-                        append("${property.name}: ${property.typeName}")
-                        if (propertyNodes.size == 1) {
-                            append(representativeNode?.augmentation?.let { if (it == Plus) " +=" else " =" } ?: ":")
-                            append(
-                                propertyNodes.single().value.sourceData.text().let { " $it" }
-                            )
-                        }
-                    }
-                )
-
-                if (propertyNodes.size > 1) {
-                    Column(Modifier.padding(start = indentDp)) {
-                        propertyNodes.forEach { propertyNode ->
-                            WithDecoration(propertyNode) {
-                                LabelMedium(
-                                    modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
-                                        .withHoverCursor()
-                                        .withClickTextRangeSelection(propertyNode, highlightingContext, false)
-                                        .semiTransparentIfNull(representativeNode),
-                                    textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
-                                    text = "${if (propertyNode.augmentation == Plus) "+=" else "="} ${
-                                        propertyNode.value.sourceData.text()
-                                    }"
+                Column(Modifier.padding(start = indentDp)) {
+                    LabelMedium(
+                        modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
+                            .withHoverCursor()
+                            .withClickTextRangeSelection(representativeNode, highlightingContext)
+                            .semiTransparentIfNull(representativeNode),
+                        textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
+                        text = buildString {
+                            append("${property.name}: ${property.typeName}")
+                            if (propertyNodes.size == 1) {
+                                append(representativeNode?.augmentation?.let { if (it == Plus) " +=" else " =" } ?: ":")
+                                append(
+                                    propertyNodes.single().value.sourceData.text().let { " $it" }
                                 )
+                            }
+                        }
+                    )
+                    if (propertyNodes.size == 1) {
+                        valuesPresentation?.get(representativeNode)?.effectiveValueNodes.orEmpty().forEach {
+                            PropertyValueItem(it)
+                        }
+                    } else {
+                        if (propertyNodes.size > 1) {
+                            propertyNodes.forEach { propertyNode ->
+                                WithDecoration(propertyNode) {
+                                    Column {
+                                        LabelMedium(
+                                            modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
+                                                .withHoverCursor()
+                                                .withClickTextRangeSelection(propertyNode, highlightingContext, false)
+                                                .semiTransparentIfNull(representativeNode),
+                                            textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
+                                            text = "${if (propertyNode.augmentation == Plus) "+=" else "="} ${
+                                                propertyNode.value.sourceData.text()
+                                            }"
+                                        )
+                                        valuesPresentation?.get(propertyNode)?.effectiveValueNodes.orEmpty().forEach {
+                                            PropertyValueItem(it)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -249,8 +270,22 @@ internal class ModelTreeRendering(
     }
 
     @Composable
+    private fun PropertyValueItem(
+        node: DeclarativeDocument.ValueNode
+    ) {
+        WithDecoration(node) {
+            LabelMedium(
+                modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2, start = indentDp)
+                    .withHoverCursor()
+                    .withClickTextRangeSelection(node, highlightingContext),
+                text = "• ${node.sourceData.text()}"
+            )
+        }
+    }
+
+    @Composable
     fun WithDecoration(
-        node: DeclarativeDocument.DocumentNode?,
+        node: DeclarativeDocument.Node?,
         content: @Composable () -> Unit
     ) {
         WithApplicableMutations(node) {
@@ -262,7 +297,7 @@ internal class ModelTreeRendering(
 
     @Composable
     private fun WithModelHighlighting(
-        node: DeclarativeDocument.DocumentNode?,
+        node: DeclarativeDocument.Node?,
         content: @Composable () -> Unit,
     ) {
         val relevantSourceRanges: List<FileAndRange> = relevantSourceRanges(node)
@@ -288,13 +323,18 @@ internal class ModelTreeRendering(
 
     data class FileAndRange(val fileId: String, val range: IntRange)
 
-    fun DeclarativeDocument.DocumentNode.fileAndRange(): FileAndRange =
+    fun DeclarativeDocument.Node.fileAndRange(): FileAndRange =
         sourceData.run { FileAndRange(sourceIdentifier.fileIdentifier, indexRange) }
 
-    private fun relevantSourceRanges(node: DeclarativeDocument.DocumentNode?): List<FileAndRange> =
-        when (val origin = node?.let { overlayOriginContainer.data(it) }) {
-            is FromOverlay -> listOf(node.fileAndRange())
-            is FromUnderlay -> listOf(origin.documentNode.fileAndRange())
+    private fun relevantSourceRanges(node: DeclarativeDocument.Node?): List<FileAndRange> {
+        val origin = when (node) {
+            is DeclarativeDocument.DocumentNode -> overlayOriginContainer.data(node)
+            is DeclarativeDocument.ValueNode -> overlayOriginContainer.data(node)
+            else -> null
+        }
+        return when (origin) {
+            is FromOverlay -> listOfNotNull(node?.fileAndRange())
+            is FromUnderlay -> listOfNotNull(node?.fileAndRange())
             is MergedProperties -> origin.run {
                 listOf(
                     shadowedPropertiesFromUnderlay,
@@ -310,10 +350,11 @@ internal class ModelTreeRendering(
 
             null -> listOf()
         }
+    }
 
     @Composable
     private fun WithApplicableMutations(
-        element: DeclarativeDocument.DocumentNode?,
+        element: DeclarativeDocument.Node?,
         content: @Composable () -> Unit
     ) {
         Row(
@@ -322,7 +363,7 @@ internal class ModelTreeRendering(
         ) {
             content()
 
-            if (element != null) {
+            if (element is DeclarativeDocument.DocumentNode) {
                 ApplicableMutations(element, mutationApplicability, onRunMutation)
             }
         }
@@ -334,7 +375,7 @@ internal fun Modifier.withHoverCursor() =
 
 @OptIn(ExperimentalFoundationApi::class)
 internal fun Modifier.withClickTextRangeSelection(
-    node: DeclarativeDocument.DocumentNode?,
+    node: DeclarativeDocument.Node?,
     highlightingContext: HighlightingContext,
     highlightWithOverlay: Boolean = true
 ) = onClick {
@@ -351,15 +392,19 @@ internal fun Modifier.withClickTextRangeSelection(
     }
 }
 
-internal fun DeclarativeDocument.DocumentNode.highlightAs(
+internal fun DeclarativeDocument.Node.highlightAs(
     highlightingKind: HighlightingKind
 ) = HighlightingEntry(sourceData.sourceIdentifier.fileIdentifier, sourceData.indexRange, highlightingKind)
 
 internal fun highlightingForNodesOf(
-    node: DeclarativeDocument.DocumentNode,
+    node: DeclarativeDocument.Node,
     overlayOriginContainer: OverlayOriginContainer
 ): List<HighlightingEntry> {
-    return when (val origin = overlayOriginContainer.data(node)) {
+    val origin = when (node) {
+        is DeclarativeDocument.DocumentNode -> overlayOriginContainer.data(node)
+        is DeclarativeDocument.ValueNode -> overlayOriginContainer.data(node)
+    }
+    return when (origin) {
         is FromOverlay,
         is FromUnderlay -> listOf(node.highlightAs(EFFECTIVE))
 

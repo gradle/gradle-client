@@ -87,6 +87,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
 
             with(
                 ModelTreeRendering(
+                    viewModel.typeRefContext,
                     indexBasedMultiResolutionContainer(listOf(document)),
                     overlayForJustThisDocument.overlayNodeOriginContainer,
                     highlightingContext,
@@ -138,6 +139,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
         Column {
             with(
                 ModelTreeRendering(
+                    viewModel.typeRefContext,
                     domWithDefaults.overlayResolutionContainer,
                     domWithDefaults.overlayNodeOriginContainer,
                     highlightingContext,

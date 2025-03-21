@@ -19,6 +19,10 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
     private val _highlightedSourceRangeByFileId = mutableStateOf(listOf<HighlightingEntry>())
     private fun readDocumentFile() = _selectedDocument.value.takeIf { it.canRead() }?.readText().orEmpty()
     private fun readSettingsFile() = model.settingsFile.takeIf { it.canRead() }?.readText().orEmpty()
+    
+    val typeRefContext = JointTypeRefContext(
+        listOf(model.settingsInterpretationSequence, model.projectInterpretationSequence)
+    )
 
     val selectedDocument: State<File> get() = _selectedDocument
 
@@ -95,7 +99,7 @@ internal enum class HighlightingKind {
     EFFECTIVE, SHADOWED;
 
     fun highlightingColor(): Color = when (this) {
-        EFFECTIVE -> Color.Green    
+        EFFECTIVE -> Color.Green
         SHADOWED -> Color.Yellow
     }
 }

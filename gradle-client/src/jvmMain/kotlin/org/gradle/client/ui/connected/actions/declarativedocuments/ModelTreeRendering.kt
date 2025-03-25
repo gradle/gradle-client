@@ -2,6 +2,7 @@ package org.gradle.client.ui.connected.actions.declarativedocuments
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -208,7 +209,7 @@ internal class ModelTreeRendering(
         val representativeNode = propertyNodes.lastOrNull()
         val valuesPresentation = findValuePresenter(representativeNode)
             ?.jointAssignedValuesPresentation(propertyNodes, resolutionContainer)
-        
+
         fun PropertyNode.hasValuePresentation(): Boolean =
             valuesPresentation?.get(this)?.effectiveValueNodes?.isNotEmpty() == true
 
@@ -313,13 +314,17 @@ internal class ModelTreeRendering(
     private fun PropertyValueItem(
         node: DeclarativeDocument.ValueNode
     ) {
-        WithDecoration(node, DOCUMENT_NODE) {
-            LabelMedium(
-                modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2, start = indentDp)
-                    .withHoverCursor()
-                    .withClickTextRangeSelection(node, highlightingContext),
-                text = "• ${node.sourceData.text()}"
-            )
+        Box(
+            modifier = Modifier
+                .padding(bottom = MaterialTheme.spacing.level2, start = indentDp)
+                .withHoverCursor()
+                .withClickTextRangeSelection(node, highlightingContext),
+        ) {
+            WithDecoration(node, DOCUMENT_NODE) {
+                LabelMedium(
+                    text = "• ${node.sourceData.text()}"
+                )
+            }
         }
     }
 
@@ -348,8 +353,8 @@ internal class ModelTreeRendering(
             fun FileAndRange.matchesHighlightingEntry(highlightingEntry: HighlightingEntry): Boolean =
                 fileId == highlightingEntry.fileIdentifier &&
                     range.first in highlightingEntry.range && range.last in highlightingEntry.range &&
-                    highlightingEntry.highlightingTarget.whenSelectedShouldHighlight(highlightTarget) 
-                        
+                    highlightingEntry.highlightingTarget.whenSelectedShouldHighlight(highlightTarget)
+
 
             highlightingContext.highlightedRanges.firstOrNull { entry ->
                 relevantSourceRanges.any { it.matchesHighlightingEntry(entry) }
@@ -377,7 +382,7 @@ internal class ModelTreeRendering(
         if (highlightingTarget == DOCUMENT_NODE) {
             return listOfNotNull(node?.fileAndRange())
         }
-        
+
         val origin = when (node) {
             is DeclarativeDocument.DocumentNode -> overlayOriginContainer.data(node)
             is DeclarativeDocument.ValueNode -> overlayOriginContainer.data(node)

@@ -208,6 +208,9 @@ internal class ModelTreeRendering(
         val representativeNode = propertyNodes.lastOrNull()
         val valuesPresentation = findValuePresenter(representativeNode)
             ?.jointAssignedValuesPresentation(propertyNodes, resolutionContainer)
+        
+        fun PropertyNode.hasValuePresentation(): Boolean =
+            valuesPresentation?.get(this)?.effectiveValueNodes?.isNotEmpty() == true
 
         WithDecoration(representativeNode) {
             Column {
@@ -222,7 +225,7 @@ internal class ModelTreeRendering(
                         representativeNode,
                         maybeInvalidDecoration,
                         property,
-                        propertyNodes.size > 1
+                        propertyNodes.size > 1 || representativeNode?.hasValuePresentation() == true
                     )
                     if (propertyNodes.size == 1) {
                         valuesPresentation?.get(representativeNode)?.effectiveValueNodes.orEmpty().forEach {
@@ -233,13 +236,16 @@ internal class ModelTreeRendering(
                             propertyNodes.forEach { propertyNode ->
                                 WithDecoration(propertyNode, highlightingTarget = DOCUMENT_NODE) {
                                     Column {
-                                        PropertyAssignmentOrAugmentationItem(
-                                            propertyNode,
-                                            representativeNode,
-                                            maybeInvalidDecoration
-                                        )
-                                        valuesPresentation?.get(propertyNode)?.effectiveValueNodes.orEmpty().forEach {
-                                            PropertyValueItem(it)
+                                        if (propertyNode.hasValuePresentation()) {
+                                            valuesPresentation?.getValue(propertyNode)?.effectiveValueNodes?.forEach {
+                                                PropertyValueItem(it)
+                                            }
+                                        } else {
+                                            PropertyAssignmentOrAugmentationItem(
+                                                propertyNode,
+                                                representativeNode,
+                                                maybeInvalidDecoration
+                                            )
                                         }
                                     }
                                 }
@@ -265,7 +271,7 @@ internal class ModelTreeRendering(
         representativeNode: PropertyNode?,
         maybeInvalidDecoration: TextDecoration,
         property: DataProperty,
-        hasMultiplePropertyNodes: Boolean
+        hasDetailedPresentation: Boolean
     ) {
         LabelMedium(
             modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
@@ -275,7 +281,7 @@ internal class ModelTreeRendering(
             textStyle = TextStyle(textDecoration = maybeInvalidDecoration),
             text = buildString {
                 append("${property.name}: ${property.typeName}")
-                if (representativeNode != null && !hasMultiplePropertyNodes) {
+                if (representativeNode != null && !hasDetailedPresentation) {
                     append(representativeNode.augmentation.let { if (it == Plus) " +=" else " =" })
                     append(
                         representativeNode.value.sourceData.text().let { " $it" }
@@ -292,7 +298,7 @@ internal class ModelTreeRendering(
         maybeInvalidDecoration: TextDecoration
     ) {
         LabelMedium(
-            modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2)
+            modifier = Modifier.padding(bottom = MaterialTheme.spacing.level2, start = indentDp)
                 .withHoverCursor()
                 .withClickTextRangeSelection(propertyNode, highlightingContext, false)
                 .semiTransparentIfNull(representativeNode),

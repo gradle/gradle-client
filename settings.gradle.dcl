@@ -1,10 +1,5 @@
 pluginManagement {
     includeBuild("./declarative-logic")
-
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-    }
 }
 
 plugins {

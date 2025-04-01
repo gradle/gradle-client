@@ -12,4 +12,4 @@ dependencyResolutionManagement {
 
 include("plugins")
 
-rootProject.name = "declarative"
+rootProject.name = "build-logic"

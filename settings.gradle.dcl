@@ -1,5 +1,5 @@
 pluginManagement {
-    includeBuild("./declarative-logic")
+    includeBuild("./build-logic")
 }
 
 plugins {

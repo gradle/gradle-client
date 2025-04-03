@@ -189,7 +189,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
             listOf(buildDocument, settingsDocument).map { it.sourceData.text() }
 
         val (buildErrorRanges, settingsErrorRanges) =
-            listOf(domWithDefaults.result, domWithDefaults.inputUnderlay).map { it.errorRanges() }
+            listOf(domWithDefaults.inputOverlay, domWithDefaults.inputUnderlay).map { it.errorRanges() }
 
         val hasAnyModelDefaultsContent =
             domWithDefaults.overlayNodeOriginContainer.collectToMap(domWithDefaults.document)

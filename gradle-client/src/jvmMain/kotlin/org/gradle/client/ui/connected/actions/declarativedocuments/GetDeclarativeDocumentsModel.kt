@@ -75,8 +75,9 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
             AnalysisDocumentUtils.documentWithModelDefaults(settingsResult, selectedDocumentResult)
     }
 
-    fun sourceHighlightingContextFor(overlay: DocumentOverlayResult) =
-        HighlightingContext(this, overlay.overlayNodeOriginContainer)
+    fun sourceHighlightingContextFor(overlay: DocumentOverlayResult) = HighlightingContext(
+        this, typeRefContext, overlay.overlayResolutionContainer, overlay.overlayNodeOriginContainer
+    )
 
     @Composable
     fun periodicallyUpdateContent() {

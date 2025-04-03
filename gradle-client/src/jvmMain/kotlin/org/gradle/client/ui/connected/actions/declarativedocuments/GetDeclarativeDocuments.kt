@@ -21,6 +21,7 @@ import org.gradle.client.ui.connected.actions.*
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingKind.EFFECTIVE
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingTarget.DOCUMENT_NODE
 import org.gradle.client.ui.theme.spacing
+import org.gradle.internal.declarativedsl.analysis.TypeRefContext
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.data.collectToMap
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.FromOverlay
@@ -28,6 +29,7 @@ import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrig
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.MergedElements
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.MergedProperties
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayOriginContainer
+import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionContainer
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils.resolvedDocument
 import org.gradle.internal.declarativedsl.evaluator.runner.stepResultOrPartialResult
 import org.gradle.tooling.BuildAction
@@ -228,7 +230,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                 viewModel.setHighlightingRanges(
                     findRelevantNodesAndProduceHighlighting(
                         clickedNode,
-                        domWithDefaults.document,
+                        domWithDefaults.document, domWithDefaults.overlayResolutionContainer, viewModel.typeRefContext,
                         domWithDefaults.overlayNodeOriginContainer
                     ) ?: listOf(clickedNode.highlightAs(EFFECTIVE, DOCUMENT_NODE))
                 )
@@ -239,21 +241,38 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
     private fun findRelevantNodesAndProduceHighlighting(
         forNode: DeclarativeDocument.DocumentNode,
         inDocument: DeclarativeDocument,
+        resolutionContainer: DocumentResolutionContainer,
+        typeRefContext: TypeRefContext,
         overlayOriginContainer: OverlayOriginContainer
     ): List<HighlightingEntry>? =
         overlayOriginContainer.collectToMap(inDocument).entries.firstNotNullOfOrNull { (node, origin) ->
             when (origin) {
                 is FromOverlay -> if (origin.documentNode == forNode)
-                    highlightingForAllDocumentNodesByModelNode(origin.documentNode, overlayOriginContainer)
+                    highlightingForAllDocumentNodesByModelNode(
+                        origin.documentNode,
+                        resolutionContainer,
+                        typeRefContext,
+                        overlayOriginContainer
+                    )
                 else null
 
                 is FromUnderlay -> if (origin.documentNode == forNode)
-                    highlightingForAllDocumentNodesByModelNode(origin.documentNode, overlayOriginContainer)
+                    highlightingForAllDocumentNodesByModelNode(
+                        origin.documentNode,
+                        resolutionContainer,
+                        typeRefContext,
+                        overlayOriginContainer
+                    )
                 else null
 
                 is MergedElements -> if (node is DeclarativeDocument.DocumentNode && (
                         origin.overlayElement == forNode || origin.underlayElement == forNode)
-                ) highlightingForAllDocumentNodesByModelNode(node, overlayOriginContainer) else null
+                ) highlightingForAllDocumentNodesByModelNode(
+                    node,
+                    resolutionContainer,
+                    typeRefContext,
+                    overlayOriginContainer
+                ) else null
 
                 is MergedProperties -> origin.run {
                     if (listOf(
@@ -263,7 +282,14 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                             effectivePropertiesFromOverlay
                         ).any { forNode in it }
                     ) (effectivePropertiesFromUnderlay + effectivePropertiesFromOverlay).lastOrNull()
-                        ?.let { highlightingForAllDocumentNodesByModelNode(it, overlayOriginContainer) }
+                        ?.let {
+                            highlightingForAllDocumentNodesByModelNode(
+                                it,
+                                resolutionContainer,
+                                typeRefContext,
+                                overlayOriginContainer
+                            )
+                        }
                     else null
                 }
             }

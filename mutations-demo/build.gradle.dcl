@@ -1,5 +1,5 @@
 kotlinJvmLibrary {
     dependencies {
-        implementation("org.gradle:gradle-declarative-dsl-core:8.14-milestone-7")
+        implementation("org.gradle:gradle-declarative-dsl-core:9.0-milestone-1")
     }
 }

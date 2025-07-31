@@ -1,12 +1,13 @@
-package org.gradle.client.softwaretype.compose;
+package org.gradle.client.softwarefeatures.compose;
 
 import kotlin.Unit;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
 import org.gradle.api.internal.plugins.BindsSoftwareFeature;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
-import org.gradle.client.softwaretype.CustomDesktopComposeApplicationBuildModel;
+import org.gradle.client.softwarefeatures.CustomDesktopComposeApplicationBuildModel;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
 import org.jetbrains.compose.desktop.application.dsl.*;
@@ -29,13 +30,13 @@ abstract public class ComposeSoftwareFeaturePlugin implements Plugin<Project> {
     static class Binding implements SoftwareFeatureBindingRegistration {
         @Override
         public void register(SoftwareFeatureBindingBuilder builder) {
-            builder.bindSoftwareFeature("compose", bindingToTargetBuildModel(Compose.class, CustomDesktopComposeApplicationBuildModel.class),
+            builder.bindSoftwareFeature("compose", bindingToTargetBuildModel(Compose.class, KotlinMultiplatformBuildModel.class),
                     (context, definition, buildModel, parent) -> {
                         Project project = context.getProject();
+                        project.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
                         project.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
 
-                        CustomDesktopComposeApplicationBuildModel parentBuildModel = context.getOrCreateModel(parent);
-                        definition.getNativeDistributions().getPackageVersion().convention(parentBuildModel.getVersion());
+                        definition.getNativeDistributions().getPackageVersion().convention(project.provider(() -> project.getVersion().toString()));
 
                         project.getPluginManager().apply("org.jetbrains.compose");
                         ((DefaultComposeBuildModel)buildModel).setComposeExtension(project.getExtensions().getByType(ComposeExtension.class));

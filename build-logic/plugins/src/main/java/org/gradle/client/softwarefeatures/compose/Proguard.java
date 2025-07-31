@@ -1,4 +1,4 @@
-package org.gradle.client.softwaretype.compose;
+package org.gradle.client.softwarefeatures.compose;
 
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.provider.ListProperty;

@@ -1,12 +1,13 @@
-package org.gradle.client.softwaretype.detekt;
+package org.gradle.client.softwarefeatures.detekt;
 
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
 import org.gradle.api.internal.plugins.BindsSoftwareFeature;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
-import org.gradle.client.softwaretype.CustomDesktopComposeApplicationBuildModel;
+import org.gradle.client.softwarefeatures.CustomDesktopComposeApplicationBuildModel;
 
 import static org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder.bindingToTargetBuildModel;
 
@@ -21,7 +22,7 @@ abstract public class DetektSoftwareFeaturePlugin implements Plugin<Project> {
     static class Binding implements SoftwareFeatureBindingRegistration {
         @Override
         public void register(SoftwareFeatureBindingBuilder builder) {
-            builder.bindSoftwareFeature("detekt", bindingToTargetBuildModel(Detekt.class, CustomDesktopComposeApplicationBuildModel.class),
+            builder.bindSoftwareFeature("detekt", bindingToTargetBuildModel(Detekt.class, KotlinMultiplatformBuildModel.class),
                     (context, definition, buildModel, parent) -> {
 
                         Project project = context.getProject();

@@ -1,9 +1,8 @@
-package org.gradle.client.softwaretype.compose;
+package org.gradle.client.softwarefeatures.compose;
 
 import org.gradle.api.Action;
 import org.gradle.api.tasks.Nested;
 import org.gradle.declarative.dsl.model.annotations.Configuring;
-import org.gradle.declarative.dsl.model.annotations.Restricted;
 
 public interface BuildType {
     @Nested

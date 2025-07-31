@@ -1,4 +1,4 @@
-package org.gradle.client.softwaretype.sqldelight;
+package org.gradle.client.softwarefeatures.sqldelight;
 
 import org.gradle.api.Named;
 import org.gradle.api.provider.Property;

@@ -16,10 +16,5 @@ javaGradlePlugin {
             description = "A custom ecosystem plugin registering the Software Type plugins provided by this project"
             implementationClass = "org.gradle.client.ecosystem.CustomEcosystemPlugin"
         }
-
-        id("org.gradle.client.softwaretype.desktop-compose-application") {
-            description = "A custom software type for the Gradle Client's desktop Compose application"
-            implementationClass = "org.gradle.client.softwaretype.CustomDesktopComposeApplicationPlugin"
-        }
     }
 }

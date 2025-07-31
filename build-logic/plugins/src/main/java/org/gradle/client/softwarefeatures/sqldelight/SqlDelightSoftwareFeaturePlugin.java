@@ -1,12 +1,13 @@
-package org.gradle.client.softwaretype.sqldelight;
+package org.gradle.client.softwarefeatures.sqldelight;
 
 import app.cash.sqldelight.gradle.SqlDelightExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.dsl.DependencyCollector;
+import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
 import org.gradle.api.internal.plugins.BindsSoftwareFeature;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
-import org.gradle.client.softwaretype.CustomDesktopComposeApplicationBuildModel;
 
 import static org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder.bindingToTargetBuildModel;
 
@@ -21,15 +22,20 @@ abstract public class SqlDelightSoftwareFeaturePlugin implements Plugin<Project>
     static class Binding implements SoftwareFeatureBindingRegistration {
         @Override
         public void register(SoftwareFeatureBindingBuilder builder) {
-            builder.bindSoftwareFeature("sqlDelight", bindingToTargetBuildModel(SqlDelight.class, CustomDesktopComposeApplicationBuildModel.class),
+            builder.bindSoftwareFeature("sqlDelight", bindingToTargetBuildModel(SqlDelight.class, KotlinMultiplatformBuildModel.class),
                 (context, definition, buildModel, parent) -> {
                     Project project = context.getProject();
 
-                    CustomDesktopComposeApplicationBuildModel parentBuildModel = context.getOrCreateModel(parent);
-                    parentBuildModel.getKotlinApplication().getTargets().jvm(jvmTarget -> {
-                        jvmTarget.getDependencies().getImplementation().add("app.cash.sqldelight:runtime:2.0.2");
-                        jvmTarget.getDependencies().getImplementation().add("app.cash.sqldelight:coroutines-extensions:2.0.2");
-                        jvmTarget.getDependencies().getImplementation().add("app.cash.sqldelight:sqlite-driver:2.0.2");
+                    KotlinMultiplatformBuildModel parentBuildModel = context.getOrCreateModel(parent);
+                    parentBuildModel.getKotlinMultiplatformExtension().jvm(jvmTarget -> {
+                        DependencyCollector sqlDelightDependencies = project.getObjects().dependencyCollector();
+                        // Ideally the sqldelight version should be configurable on the definition, but
+                        // DependencyCollector does not have an `add(Provider<CharSequence>)` method yet
+                        sqlDelightDependencies.add("app.cash.sqldelight:runtime:2.0.2");
+                        sqlDelightDependencies.add("app.cash.sqldelight:coroutines-extensions:2.0.2");
+                        sqlDelightDependencies.add("app.cash.sqldelight:sqlite-driver:2.0.2");
+                        project.getConfigurations().getByName(jvmTarget.getCompilations().getByName("main").getDefaultSourceSet().getImplementationConfigurationName())
+                                .getDependencies().addAllLater(sqlDelightDependencies.getDependencies());
                     });
 
                     project.afterEvaluate(p -> {

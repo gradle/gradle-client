@@ -1,19 +1,22 @@
-package org.gradle.client.softwaretype.compose;
+package org.gradle.client.softwarefeatures.compose;
 
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.declarative.dsl.model.annotations.Restricted;
 
-public interface MacOS {
+public interface Windows {
     @Restricted
     RegularFileProperty getIconFile();
 
     @Restricted
-    Property<Boolean> getAppStore();
+    Property<Boolean> getMenu();
 
     @Restricted
-    Property<String> getBundleID();
+    Property<String> getMenuGroup();
 
     @Restricted
-    Property<String> getDockName();
+    Property<Boolean> getPerUserInstall();
+
+    @Restricted
+    Property<String> getUpgradeUuid();
 }

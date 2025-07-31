@@ -1,4 +1,4 @@
-package org.gradle.client.softwaretype.detekt;
+package org.gradle.client.softwarefeatures.detekt;
 
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension;
 

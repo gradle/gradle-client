@@ -1,19 +1,27 @@
 package org.gradle.client.softwarefeatures.sqldelight;
 
 import app.cash.sqldelight.gradle.SqlDelightExtension;
+import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.dsl.DependencyCollector;
+import org.gradle.api.artifacts.DependencyScopeConfiguration;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
 import org.gradle.api.internal.plugins.BindsSoftwareFeature;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
 
+import static java.util.Arrays.stream;
 import static org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder.bindingToTargetBuildModel;
 
 @SuppressWarnings("UnstableApiUsage")
 @BindsSoftwareFeature(SqlDelightSoftwareFeaturePlugin.Binding.class)
 abstract public class SqlDelightSoftwareFeaturePlugin implements Plugin<Project> {
+    private static final String SQLDELIGHT_GROUP = "app.cash.sqldelight";
+    private static final String[] SQLDELIGHT_DEPENDENCY_MODULES = new String[] {
+            "runtime",
+            "coroutines-extensions",
+            "sqlite-driver"
+    };
     @Override
     public void apply(Project project) {
 
@@ -26,16 +34,19 @@ abstract public class SqlDelightSoftwareFeaturePlugin implements Plugin<Project>
                 (context, definition, buildModel, parent) -> {
                     Project project = context.getProject();
 
+                    definition.getVersion().convention("2.0.2");
+
                     KotlinMultiplatformBuildModel parentBuildModel = context.getOrCreateModel(parent);
                     parentBuildModel.getKotlinMultiplatformExtension().jvm(jvmTarget -> {
-                        DependencyCollector sqlDelightDependencies = project.getObjects().dependencyCollector();
-                        // Ideally the sqldelight version should be configurable on the definition, but
-                        // DependencyCollector does not have an `add(Provider<CharSequence>)` method yet
-                        sqlDelightDependencies.add("app.cash.sqldelight:runtime:2.0.2");
-                        sqlDelightDependencies.add("app.cash.sqldelight:coroutines-extensions:2.0.2");
-                        sqlDelightDependencies.add("app.cash.sqldelight:sqlite-driver:2.0.2");
-                        project.getConfigurations().getByName(jvmTarget.getCompilations().getByName("main").getDefaultSourceSet().getImplementationConfigurationName())
-                                .getDependencies().addAllLater(sqlDelightDependencies.getDependencies());
+                        NamedDomainObjectProvider<DependencyScopeConfiguration> sqlDelightConfiguration = project.getConfigurations().dependencyScope("sqlDelightTool", conf -> {
+                            stream(SQLDELIGHT_DEPENDENCY_MODULES).forEach(module ->
+                                conf.getDependencies().addLater(definition.getVersion().map(version -> project.getDependencyFactory().create(SQLDELIGHT_GROUP + ":" +module + ":" + version)))
+                            );
+                        });
+
+                        project.getConfigurations().named(jvmTarget.getCompilations().getByName("main").getDefaultSourceSet().getImplementationConfigurationName(), conf ->
+                                conf.extendsFrom(sqlDelightConfiguration.get())
+                        );
                     });
 
                     project.afterEvaluate(p -> {

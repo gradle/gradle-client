@@ -7,7 +7,6 @@ import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
 import org.gradle.api.internal.plugins.BindsSoftwareFeature;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
-import org.gradle.client.softwarefeatures.CustomDesktopComposeApplicationBuildModel;
 
 import static org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder.bindingToTargetBuildModel;
 

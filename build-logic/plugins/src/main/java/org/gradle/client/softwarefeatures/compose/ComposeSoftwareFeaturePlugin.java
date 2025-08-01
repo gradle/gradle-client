@@ -7,7 +7,6 @@ import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
 import org.gradle.api.internal.plugins.BindsSoftwareFeature;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
 import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
-import org.gradle.client.softwarefeatures.CustomDesktopComposeApplicationBuildModel;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
 import org.jetbrains.compose.desktop.application.dsl.*;

@@ -17,7 +17,7 @@ import java.io.File
 
 class GetResilientKotlinDslScriptsModel : GetModelAction.GetCompositeModelAction<KotlinDslScriptsModel> {
 
-    override val buildAction: BuildAction<KotlinDslScriptsModel> = ResilientKotlinDslScriptsModel()
+    override val buildAction: BuildAction<KotlinDslScriptsModel> = ResilientKotlinDslScriptsModelAction()
 
     override val modelType = KotlinDslScriptsModel::class
 
@@ -67,7 +67,7 @@ class GetResilientKotlinDslScriptsModel : GetModelAction.GetCompositeModelAction
         )
     }
 
-    class ResilientKotlinDslScriptsModel: BuildAction<KotlinDslScriptsModel> {
+    class ResilientKotlinDslScriptsModelAction: BuildAction<KotlinDslScriptsModel> {
         override fun execute(controller: BuildController): KotlinDslScriptsModel {
             // TODO: Query a model via resilient tooling API
             return controller.getModel(KotlinDslScriptsModel::class.java)

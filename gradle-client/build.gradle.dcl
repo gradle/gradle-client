@@ -20,7 +20,7 @@ desktopComposeApp {
                     implementation(project(":build-action"))
                     implementation(project(":mutations-demo"))
 
-                    implementation("org.gradle:gradle-tooling-api:8.12-20241009055624+0000")
+                    implementation("org.gradle:gradle-tooling-api:9.1.0-20250805104018+0000")
 
                     implementation("com.arkivanov.decompose:decompose:3.0.0")
                     implementation("com.arkivanov.decompose:extensions-compose:3.0.0")

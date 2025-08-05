@@ -61,6 +61,7 @@ class ConnectedComponent(
         GetGradleProject(),
         GetDeclarativeSchema(),
         GetDeclarativeDocuments(),
+        GetKotlinBaseDslScriptModel(),
         GetResilientKotlinDslScriptsModel()
     )
 

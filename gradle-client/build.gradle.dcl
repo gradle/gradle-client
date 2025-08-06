@@ -59,6 +59,7 @@ kotlinApplication {
                     implementation("org.jetbrains.compose.ui:ui-test-junit4:1.6.11")
 
                     runtimeOnly("org.junit.vintage:junit-vintage-engine:5.12.0")
+                    runtimeOnly("org.junit.platform:junit-platform-launcher:1.13.4")
                 }
             }
         }

@@ -8,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.gradle.client.ui.composables.horizontalScrollContent
+import org.gradle.client.ui.connected.actions.resilientsync.ResilientModelView
+import org.gradle.client.ui.connected.actions.resilientsync.Result
 import org.gradle.client.ui.theme.spacing
 import org.gradle.tooling.BuildAction
 import org.gradle.tooling.BuildController
@@ -26,6 +28,15 @@ class GetResilientKotlinDslScriptsModel : GetModelAction.GetCompositeModelAction
 
     @Composable
     override fun ColumnScope.ModelContent(model: KotlinDslScriptsModel) {
+        val result = Result(isSuccess = true, list = emptyList())
+        ResilientModelView(result) {
+            KotlinDslScriptsModel(model)
+        }
+    }
+
+    @Composable
+    private
+    fun KotlinDslScriptsModel(model: KotlinDslScriptsModel) {
         horizontalScrollContent {
             Text(
                 text = "Kotlin DSL Model",
@@ -69,7 +80,6 @@ class GetResilientKotlinDslScriptsModel : GetModelAction.GetCompositeModelAction
 
     class ResilientKotlinDslScriptsModelAction: BuildAction<KotlinDslScriptsModel> {
         override fun execute(controller: BuildController): KotlinDslScriptsModel {
-            // TODO: Query a model via resilient tooling API
             return controller.getModel(KotlinDslScriptsModel::class.java)
         }
     }

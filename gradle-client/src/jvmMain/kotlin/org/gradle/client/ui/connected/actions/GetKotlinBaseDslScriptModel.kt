@@ -48,7 +48,6 @@ class GetKotlinBaseDslScriptModel : GetModelAction.GetCompositeModelAction<Kotli
 
     class KotlinDslBaseScriptModelAction: BuildAction<KotlinDslBaseScriptModel> {
         override fun execute(controller: BuildController): KotlinDslBaseScriptModel {
-            // TODO: Query a model via resilient tooling API
             return controller.getModel(KotlinDslBaseScriptModel::class.java)
         }
     }

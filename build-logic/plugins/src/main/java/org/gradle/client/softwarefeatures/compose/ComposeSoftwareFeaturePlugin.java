@@ -37,15 +37,15 @@ abstract public class ComposeSoftwareFeaturePlugin implements Plugin<Project> {
 
                         definition.getNativeDistributions().getPackageVersion().convention(project.provider(() -> project.getVersion().toString()));
 
-                        project.getPluginManager().apply("org.jetbrains.compose");
-                        ((DefaultComposeBuildModel)buildModel).setComposeExtension(project.getExtensions().getByType(ComposeExtension.class));
-                        DesktopExtension desktop =  buildModel.getComposeExtension().getExtensions().getByType(DesktopExtension.class);
-                        JvmApplication application = desktop.getApplication();
-                        JvmApplicationDistributions nativeDistributions = application.getNativeDistributions();
-
                         // Many of the underlying extension elements are not provider-aware, so we have to do
                         // this in an afterEvaluate block
                         project.afterEvaluate(p -> {
+                            project.getPluginManager().apply("org.jetbrains.compose");
+                            ((DefaultComposeBuildModel)buildModel).setComposeExtension(project.getExtensions().getByType(ComposeExtension.class));
+                            DesktopExtension desktop =  buildModel.getComposeExtension().getExtensions().getByType(DesktopExtension.class);
+                            KotlinMultiplatformExtension kmpExtension = context.getOrCreateModel(parent).getKotlinMultiplatformExtension();
+                            JvmApplication application = desktop.getApplication();
+                            JvmApplicationDistributions nativeDistributions = application.getNativeDistributions();
 
                             wireNativeDistribution(definition.getNativeDistributions(), nativeDistributions);
                             application.setMainClass(definition.getMainClass().get());
@@ -54,8 +54,7 @@ abstract public class ComposeSoftwareFeaturePlugin implements Plugin<Project> {
                             wireBuildTypes(definition, application.getBuildTypes());
 
                             // Need to set the main class for the JVM run task in the KMP model from the one nested in the Compose model
-                            KotlinMultiplatformExtension kotlin = project.getExtensions().getByType(KotlinMultiplatformExtension.class);
-                            kotlin.jvm("jvm" , jvm -> {
+                            kmpExtension.jvm("jvm" , jvm -> {
                                 jvm.mainRun(kotlinJvmRunDsl -> {
                                     kotlinJvmRunDsl.getMainClass().set(definition.getMainClass());
                                     return Unit.INSTANCE;

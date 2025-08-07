@@ -60,7 +60,10 @@ class ConnectedComponent(
         GetGradleBuild(),
         GetGradleProject(),
         GetDeclarativeSchema(),
-        GetDeclarativeDocuments()
+        GetDeclarativeDocuments(),
+        GetKotlinBaseDslScriptModel(),
+        GetResilientGradleBuild(),
+        GetResilientKotlinDslScriptsModel(),
     )
 
     private val scope = coroutineScope(appDispatchers.main + SupervisorJob())

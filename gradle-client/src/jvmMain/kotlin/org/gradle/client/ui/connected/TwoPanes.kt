@@ -26,6 +26,7 @@ fun TwoPanes(
     Row(modifier) {
         Column(
             modifier = Modifier
+                .fillMaxHeight()
                 .padding(end = MaterialTheme.spacing.level2)
                 .weight(leftWeight)
                 .run { if (verticallyScrollable) verticalScroll(rememberScrollState()) else this }
@@ -36,6 +37,7 @@ fun TwoPanes(
         }
         Column(
             modifier = Modifier
+                .fillMaxHeight()
                 .weight(rightWeight)
                 .run { if (verticallyScrollable) verticalScroll(rememberScrollState()) else this }
                 .run { if (horizontallyScrollable) horizontalScroll(rememberScrollState()) else this },

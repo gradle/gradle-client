@@ -21,10 +21,16 @@ fun DeclarativeDocument.relevantRange(): IntRange {
     return IntRange(first.sourceData.indexRange.first, last.sourceData.indexRange.last)
 }
 
-fun DocumentWithResolution.errorRanges(): List<IntRange> =
+data class ErrorData(
+    val range: IntRange,
+    val documentNode: DeclarativeDocument.Node,
+    val resolution: DocumentResolution.UnsuccessfulResolution
+)
+
+fun DocumentWithResolution.errorRanges(): List<ErrorData> =
     resolutionContainer.collectToMap(document).entries
         .filter { it.value is DocumentResolution.UnsuccessfulResolution }
-        .map { it.key.sourceData.indexRange }
+        .map { ErrorData(it.key.sourceData.indexRange, it.key, it.value as DocumentResolution.UnsuccessfulResolution) }
 
 fun DeclarativeDocument.nodeAt(fileIdentifier: String, offset: Int): DeclarativeDocument.DocumentNode? {
     var node: DeclarativeDocument.DocumentNode? = null
@@ -155,5 +161,5 @@ internal fun DocumentResolutionContainer.isUnresolvedBase(node: DeclarativeDocum
         is DeclarativeDocument.DocumentNode -> data(node)
         is DeclarativeDocument.ValueNode -> data(node)
     }
-    return resolution is DocumentResolution.UnsuccessfulResolution && resolution.reasons != listOf(UnresolvedBase)
+    return resolution is DocumentResolution.UnsuccessfulResolution && resolution.reasons == listOf(UnresolvedBase)
 }

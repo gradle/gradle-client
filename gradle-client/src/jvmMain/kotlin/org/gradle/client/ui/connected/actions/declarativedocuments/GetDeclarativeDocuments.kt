@@ -8,6 +8,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.gradle.client.build.action.GetResolvedDomAction
 import org.gradle.client.build.model.ResolvedDomPrerequisites
 import org.gradle.client.core.gradle.dcl.*
@@ -24,10 +28,7 @@ import org.gradle.client.ui.theme.spacing
 import org.gradle.internal.declarativedsl.analysis.TypeRefContext
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.data.collectToMap
-import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.FromOverlay
-import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.FromUnderlay
-import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.MergedElements
-import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.MergedProperties
+import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.*
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayOriginContainer
 import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionContainer
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils.resolvedDocument
@@ -35,6 +36,7 @@ import org.gradle.internal.declarativedsl.evaluator.runner.stepResultOrPartialRe
 import org.gradle.tooling.BuildAction
 import org.jetbrains.skiko.Cursor
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 
 class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedDomPrerequisites> {
@@ -196,6 +198,8 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
         val hasAnyModelDefaultsContent =
             domWithDefaults.overlayNodeOriginContainer.collectToMap(domWithDefaults.document)
                 .any { it.value !is FromOverlay }
+        
+        val reportedErrors = viewModel.reportedErrors.value
 
         val sources = listOfNotNull(
             SourceFileViewInput(
@@ -204,7 +208,8 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                 relevantIndicesRange = null, // we are interested in the whole project file content
                 highlightedSourceRange =
                     viewModel.highlightedSourceRangeByFileId.value.filter { it.fileIdentifier == buildFileId },
-                errorRanges = buildErrorRanges
+                allErrorRanges = buildErrorRanges,
+                selectedErrorRanges = reportedErrors[buildFileId].orEmpty()
             ),
             SourceFileViewInput(
                 settingsFileId,
@@ -213,7 +218,8 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                 relevantIndicesRange = domWithDefaults.inputUnderlay.document.relevantRange(),
                 highlightedSourceRange =
                     viewModel.highlightedSourceRangeByFileId.value.filter { it.fileIdentifier == settingsFileId },
-                errorRanges = settingsErrorRanges
+                allErrorRanges = settingsErrorRanges,
+                selectedErrorRanges = reportedErrors[settingsFileId].orEmpty()
             ).takeIf { !viewModel.isViewingSettings() && hasAnyModelDefaultsContent },
         )
 
@@ -232,8 +238,19 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                         clickedNode,
                         domWithDefaults.document, domWithDefaults.overlayResolutionContainer, viewModel.typeRefContext,
                         domWithDefaults.overlayNodeOriginContainer
-                    ) ?: listOf(clickedNode.highlightAs(EFFECTIVE, DOCUMENT_NODE))
+                    ) ?: listOf(clickedNode.highlightAs(EFFECTIVE, DOCUMENT_NODE)),
                 )
+            }
+            val errorsByFileId = mapOf(
+                fileIdentifier to sources.single { it.fileIdentifier == fileIdentifier }
+                    .allErrorRanges.filter { clickOffset in it.range }
+            )
+            viewModel.reportErrors(errorsByFileId)
+            CoroutineScope(Dispatchers.Main).launch { 
+                delay(4.seconds)
+                if (viewModel.reportedErrors.value === errorsByFileId) {
+                    viewModel.reportErrors(emptyMap())
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.delay
 import org.gradle.client.build.model.ResolvedDomPrerequisites
+import org.gradle.client.core.gradle.dcl.ErrorData
 import org.gradle.client.core.gradle.dcl.analyzer
 import org.gradle.client.core.gradle.dcl.settingsWithNoOverlayOrigin
 import org.gradle.internal.declarativedsl.dom.operations.overlay.DocumentOverlayResult
@@ -17,6 +18,7 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
     private val selectedFileContent = mutableStateOf(readDocumentFile())
     private val settingsFileContent = mutableStateOf(readSettingsFile())
     private val _highlightedSourceRangeByFileId = mutableStateOf(listOf<HighlightingEntry>())
+    private val _reportedErrors = mutableStateOf(emptyMap<String, List<ErrorData>>())
     private fun readDocumentFile() = _selectedDocument.value.takeIf { it.canRead() }?.readText().orEmpty()
     private fun readSettingsFile() = model.settingsFile.takeIf { it.canRead() }?.readText().orEmpty()
     
@@ -29,13 +31,20 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
     fun isViewingSettings() = selectedDocument.value == model.settingsFile
 
     val highlightedSourceRangeByFileId: State<List<HighlightingEntry>> get() = _highlightedSourceRangeByFileId
+    val reportedErrors: State<Map<String, List<ErrorData>>> get() = _reportedErrors
 
     fun clearHighlighting() {
         _highlightedSourceRangeByFileId.value = emptyList()
+        _reportedErrors.value = emptyMap()
     }
 
     fun setHighlightingRanges(entries: List<HighlightingEntry>) {
         _highlightedSourceRangeByFileId.value = entries
+        _reportedErrors.value = emptyMap()
+    }
+    
+    fun reportErrors(errorsByFileId: Map<String, List<ErrorData>>) {
+        _reportedErrors.value = errorsByFileId
     }
 
     fun selectDocument(file: File) {

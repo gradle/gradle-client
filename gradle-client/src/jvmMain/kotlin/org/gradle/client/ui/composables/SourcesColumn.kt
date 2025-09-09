@@ -18,6 +18,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import org.gradle.client.core.gradle.dcl.ErrorData
+import org.gradle.client.core.gradle.dcl.userFriendlyErrorMessages
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingEntry
 import org.gradle.client.ui.theme.spacing
 import org.gradle.client.ui.theme.transparency
@@ -26,7 +28,8 @@ internal data class SourceFileViewInput(
     val fileIdentifier: String,
     val fileContent: String,
     val relevantIndicesRange: IntRange?,
-    val errorRanges: List<IntRange>,
+    val allErrorRanges: List<ErrorData>,
+    val selectedErrorRanges: List<ErrorData>,
     val highlightedSourceRange: List<HighlightingEntry>
 )
 
@@ -50,7 +53,7 @@ internal fun SourcesColumn(
 
                 val highlightedString = sourceFileAnnotatedString(
                     highlightedRangeOrNull,
-                    sourceFileViewInput.errorRanges,
+                    sourceFileViewInput.allErrorRanges.map { it.range },
                     sourceFileViewInput.fileContent
                 )
 
@@ -61,7 +64,8 @@ internal fun SourcesColumn(
                 SourceFileData(
                     identifier,
                     highlightedString,
-                    relevantHighlightedString
+                    relevantHighlightedString,
+                    sourceFileViewInput.selectedErrorRanges
                 )
             }
         }
@@ -71,6 +75,7 @@ internal fun SourcesColumn(
                 data.relativePath,
                 data.annotatedSource,
                 data.trimmedSource,
+                data.selectedErrorRanges,
                 onClick
             )
             MaterialTheme.spacing.VerticalLevel4()
@@ -82,7 +87,8 @@ internal fun SourcesColumn(
 private data class SourceFileData(
     val relativePath: String,
     val annotatedSource: AnnotatedString,
-    val trimmedSource: TrimmedText?
+    val trimmedSource: TrimmedText?,
+    val selectedErrorRanges: List<ErrorData>
 )
 
 private fun sourceFileAnnotatedString(
@@ -109,8 +115,13 @@ private fun SourceFileTitleAndText(
     fileRelativePath: String,
     highlightedSource: AnnotatedString,
     trimmedSource: TrimmedText?,
+    selectedErrors: List<ErrorData>?,
     onClick: (String, Int) -> Unit
 ) {
+    val errorPopupText = selectedErrors?.takeIf { it.isNotEmpty() }?.let {
+        it.flatMap { userFriendlyErrorMessages(it.documentNode, it.resolution) }.joinToString("\n")
+    }
+    
     if (trimmedSource != null) {
         var isTrimmed by remember { mutableStateOf(true) }
 
@@ -130,7 +141,8 @@ private fun SourceFileTitleAndText(
         MaterialTheme.spacing.VerticalLevel2()
         CodeBlock(
             Modifier.fillMaxWidth(),
-            if (isTrimmed) trimmedSource.annotatedString else highlightedSource
+            if (isTrimmed) trimmedSource.annotatedString else highlightedSource,
+            errorPopupText
         ) { clickOffset ->
             val originalOffset = if (isTrimmed)
                 trimmedSource.mapIndexToIndexInOriginalText(clickOffset)
@@ -141,7 +153,7 @@ private fun SourceFileTitleAndText(
     } else {
         TitleMedium(fileRelativePath)
         MaterialTheme.spacing.VerticalLevel4()
-        CodeBlock(Modifier.fillMaxWidth(), highlightedSource) { clickOffset ->
+        CodeBlock(Modifier.fillMaxWidth(), highlightedSource, errorPopupText) { clickOffset ->
             onClick(fileRelativePath, clickOffset)
         }
     }

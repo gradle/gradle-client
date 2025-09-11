@@ -11,5 +11,6 @@ dependencyResolutionManagement {
 }
 
 include("plugins")
+include("hacking")
 
 rootProject.name = "build-logic"

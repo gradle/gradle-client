@@ -1,4 +1,13 @@
 pluginManagement {
+    repositories {
+        maven {
+            url = uri("https://repo.gradle.org/gradle/libs-releases")
+        }
+        maven {
+            url = uri("https://repo.gradle.org/gradle/libs-snapshots")
+        }
+        gradlePluginPortal()
+    }
     includeBuild("./build-logic")
 }
 
@@ -32,3 +41,9 @@ rootProject.name = "gradle-client-root"
 include(":gradle-client")
 include(":build-action")
 include(":mutations-demo")
+
+defaults {
+    javaLibrary {
+        javaVersion = 17
+    }
+}

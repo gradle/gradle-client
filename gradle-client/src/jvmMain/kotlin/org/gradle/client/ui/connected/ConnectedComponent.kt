@@ -45,6 +45,11 @@ sealed interface Outcome {
     data class Failure(val exception: Exception) : Outcome
 }
 
+data class ModelActionGroup(
+    val name: String,
+    val modelActions: List<GetModelAction<*>>
+)
+
 class ConnectedComponent(
     context: ComponentContext,
     private val appDispatchers: AppDispatchers,
@@ -55,15 +60,20 @@ class ConnectedComponent(
     private val mutableModel = MutableValue<ConnectionModel>(ConnectionModel.Connecting)
     val model: Value<ConnectionModel> = mutableModel
 
-    val modelActions = listOf(
-        GetBuildEnvironment(),
-        GetGradleBuild(),
-        GetGradleProject(),
-        GetDeclarativeSchema(),
-        GetDeclarativeDocuments(),
-        GetKotlinBaseDslScriptModel(),
-        GetResilientGradleBuild(),
-        GetResilientKotlinDslScriptsModel(),
+    val modelActionGroups = listOf(
+        ModelActionGroup(
+            "Build and project",
+            listOf(GetBuildEnvironment(), GetGradleBuild(), GetGradleProject())
+        ),
+        ModelActionGroup(
+            "Declarative Gradle",
+            listOf(GetDeclarativeSchema(), GetDeclarativeDocuments())
+        ),
+        ModelActionGroup(
+            "Kotlin DSL",
+            listOf(GetKotlinBaseDslScriptModel(), GetResilientGradleBuild(), GetResilientKotlinDslScriptsModel())
+        )
+        
     )
 
     private val scope = coroutineScope(appDispatchers.main + SupervisorJob())
@@ -203,7 +213,8 @@ class ConnectedComponent(
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> actionFor(model: T): GetModelAction<T>? =
-        modelActions.find { it.modelType.java.isAssignableFrom(model::class.java) } as? GetModelAction<T>
+        modelActionGroups.flatMap { it.modelActions }
+            .find { it.modelType.java.isAssignableFrom(model::class.java) } as? GetModelAction<T>
 
     fun onCloseClicked() {
         onFinished()

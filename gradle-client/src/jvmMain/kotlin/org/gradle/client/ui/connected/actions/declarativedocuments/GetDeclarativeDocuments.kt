@@ -27,6 +27,7 @@ import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingT
 import org.gradle.client.ui.theme.spacing
 import org.gradle.internal.declarativedsl.analysis.TypeRefContext
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
+import org.gradle.internal.declarativedsl.dom.DocumentResolution.ElementResolution.SuccessfulElementResolution
 import org.gradle.internal.declarativedsl.dom.data.collectToMap
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin.*
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayOriginContainer
@@ -164,7 +165,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
             ) {
                 WithDecoration(softwareTypeNode) {
                     TitleMedium(
-                        text = "Software Type: ${softwareTypeNode.name}",
+                        text = "Project type: ${softwareTypeNode.name}",
                         modifier = Modifier
                             .pointerHoverIcon(
                                 PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
@@ -172,7 +173,9 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                             .withClickTextRangeSelection(softwareTypeNode, highlightingContext)
                     )
                 }
-                MaterialTheme.spacing.VerticalLevel4()
+                (domWithDefaults.overlayResolutionContainer.data(softwareTypeNode) as? SuccessfulElementResolution)
+                    ?.elementFactoryFunction
+                    ?.let { FeatureOriginInfo(it, Modifier) }
 
                 ElementInfoOrNothingDeclared(softwareTypeType, softwareTypeNode, 0)
             }

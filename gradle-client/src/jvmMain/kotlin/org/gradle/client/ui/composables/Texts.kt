@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package org.gradle.client.ui.composables
 
 import androidx.compose.animation.animateContentSize
@@ -50,6 +52,15 @@ fun TitleMedium(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun TitleSmall(text: String, modifier: Modifier = Modifier) {
+    Text(
+        modifier = modifier,
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+    )
+}
+
+@Composable
+fun TitleSmall(text: AnnotatedString, modifier: Modifier = Modifier) {
     Text(
         modifier = modifier,
         text = text,

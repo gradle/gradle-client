@@ -16,6 +16,7 @@ import org.gradle.client.core.database.sqldelight.SqlDriverFactory
 import org.gradle.client.ui.connected.ConnectionModel
 import org.gradle.client.ui.connected.Outcome
 import org.gradle.client.ui.fixtures.AbstractUiTest
+import org.gradle.internal.operations.BuildOperationDescriptor.displayName
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.instanceOf
@@ -26,7 +27,7 @@ import org.junit.Test
 class GradleClientUiTest : AbstractUiTest() {
     @Test
     fun gradleClientTest() = runTest {
-        runDesktopComposeUiTest(800, 600) {
+        runDesktopComposeUiTest(1280, 1024) {
             appDirs.logApplicationDirectories()
             val sqlDriverFactory = SqlDriverFactory(appDirs)
             val sqlDriver = sqlDriverFactory.createDriver()
@@ -104,8 +105,10 @@ class GradleClientUiTest : AbstractUiTest() {
                     instanceOf(ConnectionModel.Connecting::class.java)
                 )
                 advanceUntilIdle()
-                connected.component.modelActions.map { it.displayName }.forEach { actionName ->
-                    onNodeWithText(actionName).assertIsDisplayed()
+                connected.component.modelActionGroups.forEach { group ->
+                    group.modelActions.map { it.displayName }.forEach { actionName ->
+                        onNodeWithText(actionName).assertIsDisplayed()
+                    }
                 }
                 takeScreenshot("connected")
 
@@ -115,7 +118,8 @@ class GradleClientUiTest : AbstractUiTest() {
                     instanceOf(Outcome.None::class.java)
                 )
                 onNodeWithText(
-                    connected.component.modelActions.single { it.modelType == GradleBuild::class }.displayName
+                    connected.component.modelActionGroups.flatMap { it.modelActions }
+                        .single { it.modelType == GradleBuild::class }.displayName
                 ).performClick()
 
                 // Displays model

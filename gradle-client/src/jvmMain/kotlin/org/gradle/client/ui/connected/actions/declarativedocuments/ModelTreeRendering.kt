@@ -11,8 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.times
 import org.gradle.client.core.gradle.dcl.isUnresolvedBase
 import org.gradle.client.core.gradle.dcl.type
@@ -32,6 +36,7 @@ import org.gradle.client.ui.theme.transparency
 import org.gradle.declarative.dsl.schema.DataClass
 import org.gradle.declarative.dsl.schema.DataProperty
 import org.gradle.declarative.dsl.schema.SchemaMemberFunction
+import org.gradle.declarative.dsl.schema.SoftwareFeatureOrigin
 import org.gradle.internal.declarativedsl.analysis.TypeRefContext
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ElementNode
@@ -182,6 +187,7 @@ internal class ModelTreeRendering(
                             .withClickTextRangeSelection(functionNode, highlightingContext)
                     )
                 }
+                FeatureOriginInfo(subFunction)
                 ElementInfoOrNothingDeclared(functionType, functionNode, indentLevel + 1)
             }
         } else {
@@ -192,7 +198,33 @@ internal class ModelTreeRendering(
                     .semiTransparentIfNull(null)
                     .withClickTextRangeSelection(null, highlightingContext)
             )
+            FeatureOriginInfo(subFunction, Modifier.semiTransparentIfNull(null))
             ElementInfoOrNothingDeclared(null, null, indentLevel + 1)
+        }
+    }
+
+    @Composable
+    internal fun FeatureOriginInfo(
+        subFunction: SchemaMemberFunction,
+        modifier: Modifier = Modifier
+    ) {
+        subFunction.metadata.find { it is SoftwareFeatureOrigin }?.let { metadata ->
+            metadata as SoftwareFeatureOrigin
+            TitleSmall(
+                buildAnnotatedString {
+                    val isProjectType = metadata.targetDefinitionClassName == "org.gradle.api.Project"
+                    val featureKind = when {
+                        isProjectType -> ""
+                        else -> "feature "
+                    }
+                    append("(${featureKind}from plugin ")
+                    withStyle(style = SpanStyle(fontFamily = FontFamily.Monospace)) {
+                        append("${metadata.ecosystemPluginId}")
+                    }
+                    append(")")
+                },
+                modifier = modifier.padding(start = indentDp)
+            )
         }
     }
 
@@ -233,6 +265,9 @@ internal class ModelTreeRendering(
                     } else {
                         if (propertyNodes.size > 1) {
                             propertyNodes.forEach { propertyNode ->
+                                val itemDecoration = maybeInvalidDecoration(
+                                    resolutionContainer.data(propertyNode) !is PropertyAssignmentResolved
+                                )
                                 WithDecoration(propertyNode, highlightingTarget = DOCUMENT_NODE) {
                                     Column {
                                         if (propertyNode.hasValuePresentation()) {
@@ -243,7 +278,7 @@ internal class ModelTreeRendering(
                                             PropertyAssignmentOrAugmentationItem(
                                                 propertyNode,
                                                 representativeNode,
-                                                maybeInvalidDecoration
+                                                itemDecoration
                                             )
                                         }
                                     }
@@ -499,6 +534,31 @@ internal fun highlightingForAllDocumentNodesByModelNode(
         is DeclarativeDocument.DocumentNode -> overlayOriginContainer.data(node)
         is DeclarativeDocument.ValueNode -> overlayOriginContainer.data(node)
     }
+
+    val shadowedValueNodes = run {
+        val propertyNodes = when (origin) {
+            is MergedProperties -> 
+                (origin.effectivePropertiesFromUnderlay + origin.effectivePropertiesFromOverlay).toList()
+            is FromUnderlay -> listOf(origin.documentNode)
+            is FromOverlay -> listOf(origin.documentNode)
+            is MergedElements -> emptyList()
+        }
+        
+        val valuePresentation = if (node is PropertyNode)
+            findValuePresenter(resolutionContainer, typeRefContext, node)
+        else null
+
+        valuePresentation?.jointAssignedValuesPresentation(
+            propertyNodes.filterIsInstance<PropertyNode>(),
+            resolutionContainer
+        )?.flatMap {
+            it.value.valueNodeEntries
+                .filter { item -> !item.isEffectiveItem }
+                .map { item -> item.fullValueNode }
+        }
+    }
+
+
     return when (origin) {
         is FromOverlay,
         is FromUnderlay -> listOf(node.highlightAs(EFFECTIVE, MODEL_NODE))
@@ -512,20 +572,6 @@ internal fun highlightingForAllDocumentNodesByModelNode(
             // In addition to the full property nodes that are shadowed according to the DOM overlay, 
             // if there is an element comprehension for this property,
             // also highlight the shadowed elements:
-            val shadowedValueNodes = run {
-                val valuePresentation = if (node is PropertyNode)
-                    findValuePresenter(resolutionContainer, typeRefContext, node)
-                else null
-                
-                valuePresentation?.jointAssignedValuesPresentation(
-                    (origin.effectivePropertiesFromUnderlay + origin.effectivePropertiesFromOverlay).toList(),
-                    resolutionContainer
-                )?.flatMap {
-                    it.value.valueNodeEntries
-                        .filter { item -> !item.isEffectiveItem }
-                        .map { item -> item.fullValueNode }
-                }
-            }
             
             (origin.effectivePropertiesFromOverlay + origin.effectivePropertiesFromUnderlay).map {
                 it.highlightAs(EFFECTIVE, MODEL_NODE)

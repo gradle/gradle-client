@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import org.gradle.client.ui.composables.FailureContent
 import org.gradle.client.ui.composables.Loading
@@ -63,17 +64,24 @@ private fun ConnectedMainContent(component: ConnectedComponent, model: Connectio
             modifier = Modifier.padding(sheetPadding),
             left = {
                 // Actions
-                component.modelActions.forEach { action ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().selectable(
-                            selected = false,
-                            onClick = { component.getModel(action) }
-                        ).padding(MaterialTheme.spacing.level1),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.level1)
-                    ) {
-                        Icon(Icons.Default.PlayCircle, action.displayName)
-                        Text(action.displayName, style = MaterialTheme.typography.bodyMedium)
+                component.modelActionGroups.forEachIndexed { index, group -> 
+                    if (index != 0) {
+                        HorizontalDivider(Modifier.padding(top = 4.dp, bottom = 4.dp))
+                    }
+                    Row { TitleMedium(group.name) }
+                    
+                    group.modelActions.forEach { action ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().selectable(
+                                selected = false,
+                                onClick = { component.getModel(action) }
+                            ).padding(MaterialTheme.spacing.level1),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.level1)
+                        ) {
+                            Icon(Icons.Default.PlayCircle, action.displayName)
+                            Text(action.displayName, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
             },

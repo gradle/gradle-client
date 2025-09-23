@@ -41,6 +41,7 @@
 -dontwarn org.jetbrains.kotlin.cli.jvm.javac.**
 -dontwarn org.jetbrains.kotlin.com.intellij.**
 -dontwarn org.jetbrains.kotlin.javac.**
+-dontwarn org.jetbrains.kotlin.io.**
 -dontwarn org.checkerframework.**
 
 # =========================================================================
@@ -64,6 +65,9 @@
 
 # Coroutines
 -keep class kotlinx.coroutines.swing.SwingDispatcherFactory
+
+# JSpecify
+-keep class org.jspecify.** { *; }
 
 # Logging
 -keep class org.slf4j.** { *; }

@@ -11,7 +11,7 @@ import org.gradle.client.ui.composables.horizontalScrollContent
 import org.gradle.client.ui.theme.spacing
 import org.gradle.tooling.BuildAction
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.kotlin.dsl.KotlinDslBaseScriptModel
+import org.gradle.tooling.model.dsl.KotlinDslBaseScriptModel
 
 class GetKotlinBaseDslScriptModel : GetModelAction.GetCompositeModelAction<KotlinDslBaseScriptModel> {
 
@@ -36,7 +36,7 @@ class GetKotlinBaseDslScriptModel : GetModelAction.GetCompositeModelAction<Kotli
                 style = MaterialTheme.typography.labelMedium
             )
             Text(
-                text = "Kotlin DSL Base ClassPath, number of entries: ${model.kotlinDslClassPath.size}",
+                text = "Kotlin DSL Base ClassPath, number of entries: ${model.compileClassPath.size}",
                 style = MaterialTheme.typography.labelMedium
             )
             Text(

@@ -41,7 +41,7 @@ class GetDeclarativeSchema : GetModelAction<DeclarativeSchemaModel> {
         val description = buildString {
             appendDescription(hashSetOf(), model.projectSchema, softwareTypeSchema)
         }
-        CodeBlock(Modifier.fillMaxWidth(), buildAnnotatedString { append(description) })
+        CodeBlock(Modifier.fillMaxWidth(), buildAnnotatedString { append(description) }, null)
     }
 
     private val indentChars = "    "

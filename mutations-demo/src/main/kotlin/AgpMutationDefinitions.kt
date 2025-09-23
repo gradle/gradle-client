@@ -54,7 +54,7 @@ val enableCompose = run {
         AnalysisSchema::hasAgp,
         { ScopeLocation.fromTopLevel().inObjectsOfType(agpAndroidLibrary) },
         { agpAndroidLibrary.singleFunctionNamed("dependenciesDcl") },
-        { _ -> elementFromString("implementation(\"androidx.compose.material3:material3:1.3.0\")") }
+        { _ -> elementFromString("implementation(\"androidx.compose.material3:material3:1.3.2\")") }
     )
 
     object : AgpMutationDefinition {

@@ -39,6 +39,7 @@ kotlinApplication {
                 implementation("org.gradle:gradle-declarative-dsl-core:9.2.0-milestone-2")
                 implementation("org.gradle:gradle-declarative-dsl-evaluator:9.2.0-milestone-2")
                 implementation("org.gradle:gradle-declarative-dsl-tooling-models:9.2.0-milestone-2")
+                implementation("org.jspecify:jspecify:1.0.0")
 
                 runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
 

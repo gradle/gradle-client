@@ -121,12 +121,15 @@ kotlinApplication {
             appResourcesRootDir = layout.projectDirectory.dir("src/assets")
 
             modules = listOf(
+                "java.datatransfer",
+                "java.desktop",
                 "java.instrument",
                 "java.management",
                 "java.naming",
                 "java.scripting",
                 "java.sql",
                 "jdk.compiler",
+                "jdk.crypto.ec",
                 "jdk.security.auth",
                 "jdk.unsupported",
             )

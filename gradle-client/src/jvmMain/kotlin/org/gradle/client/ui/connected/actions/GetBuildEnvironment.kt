@@ -1,9 +1,9 @@
 package org.gradle.client.ui.connected.actions
 
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import org.gradle.client.ui.composables.LabelSmall
+import org.gradle.client.ui.composables.TitleMedium
 import org.gradle.client.ui.composables.horizontalScrollContent
 import org.gradle.tooling.model.build.BuildEnvironment
 
@@ -17,30 +17,12 @@ class GetBuildEnvironment : GetModelAction<BuildEnvironment> {
     @Composable
     override fun ColumnScope.ModelContent(model: BuildEnvironment) {
         horizontalScrollContent {
-            Text(
-                text = "Build Environment",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "Build Identifier: ${model.buildIdentifier.rootDir}",
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
-                text = "Java Home: ${model.java.javaHome}",
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
-                text = "JVM Arguments:  ${model.java.jvmArguments}",
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
-                text = "Gradle Version: ${model.gradle.gradleVersion}",
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
-                text = "Gradle User Home: ${model.gradle.gradleUserHome}",
-                style = MaterialTheme.typography.labelSmall
-            )
+            TitleMedium("Build Environment")
+            LabelSmall("Build Identifier: ${model.buildIdentifier.rootDir}")
+            LabelSmall("Java Home: ${model.java.javaHome}")
+            LabelSmall("JVM Arguments:  ${model.java.jvmArguments}")
+            LabelSmall("Gradle Version: ${model.gradle.gradleVersion}")
+            LabelSmall("Gradle User Home: ${model.gradle.gradleUserHome}")
         }
     }
 }

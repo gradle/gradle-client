@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.gradle.client.ui.theme.Spacing
 import org.gradle.client.ui.theme.spacing
 
 private val SHEET_PEEK_HEIGHT = 48.dp
@@ -116,7 +117,7 @@ fun EventsBottomSheetScaffold(
                             )
                         }
                         item {
-                            Spacer(Modifier.size(MaterialTheme.spacing.level2))
+                            Spacing.VerticalLevel2()
                         }
                     }
                 }

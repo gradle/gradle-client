@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.gradle.client.ui.theme.Spacing
 import org.gradle.client.ui.theme.spacing
 
 @Composable
@@ -46,7 +47,7 @@ fun ResultContent(result: Result) {
         val syncResult = if (result.isSuccess) { "Success" } else { "Failure" }
         Text(text = "Sync Result: $syncResult", style = MaterialTheme.typography.titleMedium)
         result.list.let {
-            Spacer(Modifier.size(MaterialTheme.spacing.level4))
+            Spacing.VerticalLevel4()
             Text(
                 text = "Errors (${result.list.size} total)",
                 style = MaterialTheme.typography.titleSmall

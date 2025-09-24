@@ -11,13 +11,16 @@
 # =========================================================================
 # UNUSED CLASSES
 
-# Logback dynamic janino
+# Logback unused dependencies
 -dontwarn org.codehaus.janino.**
 -dontwarn org.codehaus.commons.compiler.**
-
-# Logback networking
 -dontwarn jakarta.servlet.**
 -dontwarn jakarta.mail.**
+-dontwarn org.tukaani.xz.**
+
+# Kotlin
+-dontwarn kotlin.jvm.internal.EnhancedNullability
+-dontwarn kotlin.concurrent.atomics.**
 
 # Kotlinx DateTime
 -dontwarn kotlinx.datetime.**
@@ -25,23 +28,17 @@
 # Android
 -dontwarn android.**
 
-# OkHttp3 Crypto
+# OkHttp3 unused dependencies
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
+-dontwarn org.graalvm.nativeimage.**
+-dontwarn com.oracle.svm.**
 
 # Kotlin embedded compiler dependencies
 -dontwarn kotlin.annotations.jvm.**
 -dontwarn org.jetbrains.concurrency.**
--dontwarn org.jetbrains.kotlin.com.google.common.**
--dontwarn org.jetbrains.kotlin.com.google.gson.**
--dontwarn org.jetbrains.kotlin.com.google.errorprone.**
--dontwarn org.jetbrains.kotlin.com.google.j2objc.**
--dontwarn org.jetbrains.kotlin.org.jline.**
--dontwarn org.jetbrains.kotlin.cli.jvm.javac.**
--dontwarn org.jetbrains.kotlin.com.intellij.**
--dontwarn org.jetbrains.kotlin.javac.**
--dontwarn org.jetbrains.kotlin.io.**
+-dontwarn org.jetbrains.kotlin.**
 -dontwarn org.checkerframework.**
 
 # =========================================================================

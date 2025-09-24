@@ -149,27 +149,30 @@ They are also automatically attached as release assets when building a tag.
 
 ### Mac
 
+To package a DMG on macOS to [gradle-client/build/compose/binaries/main-release/dmg](./gradle-client/build/compose/binaries/main-release/dmg) use:
+
 ```shell
-# Package DMG on MacOS
 ./gradlew :gradle-client:packageReleaseDmg
 ```
 
-DMG file is output in [gradle-client/build/compose/binaries/main-release/dmg](./gradle-client/build/compose/binaries/main-release/dmg).
-
 ### Linux
 
+To package a DEB on Linux to [gradle-client/build/compose/binaries/main-release/deb](./gradle-client/build/compose/binaries/main-release/deb) use:
+
 ```shell
-# Package DEB on Linux
 ./gradlew :gradle-client:packageReleaseDeb
 ```
 
-DEB file is output in [gradle-client/build/compose/binaries/main-release/deb](./gradle-client/build/compose/binaries/main-release/deb).
+To package an RPM on Linux to [gradle-client/build/compose/binaries/main-release/rpm](./gradle-client/build/compose/binaries/main-release/rpm) use:
+
+```shell
+./gradlew :gradle-client:packageReleaseRpm
+```
 
 ### Windows
 
+To package an MSI on Windows to [gradle-client/build/compose/binaries/main-release/msi](gradle-client/build/compose/binaries/main-release/msi) use:
+
 ```shell
-# Package MSI on Windows
 ./gradlew :gradle-client:packageReleaseMsi
 ```
-
-MSI file is output in [gradle-client/build/compose/binaries/main-release/msi](gradle-client/build/compose/binaries/main-release/msi).

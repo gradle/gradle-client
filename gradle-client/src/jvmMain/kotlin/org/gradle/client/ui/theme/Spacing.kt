@@ -32,6 +32,11 @@ data object Spacing {
     fun VerticalLevel4() {
         Spacer(Modifier.height(level4))
     }
+
+    @Composable
+    fun VerticalLevel6() {
+        Spacer(Modifier.height(level6))
+    }
 }
 
 val MaterialTheme.spacing: Spacing

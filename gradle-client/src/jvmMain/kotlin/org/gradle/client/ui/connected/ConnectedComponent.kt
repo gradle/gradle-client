@@ -62,16 +62,16 @@ class ConnectedComponent(
 
     val modelActionGroups = listOf(
         ModelActionGroup(
-            "Build and project",
-            listOf(GetBuildEnvironment(), GetGradleBuild(), GetResilientGradleBuild(), GetGradleProject())
+            "Basics",
+            listOf(GetBuildEnvironment(), GetGradleBuild(), GetGradleProject())
         ),
         ModelActionGroup(
             "Declarative Gradle",
             listOf(GetDeclarativeSchema(), GetDeclarativeDocuments())
         ),
         ModelActionGroup(
-            "Kotlin DSL",
-            listOf(GetKotlinBaseDslScriptModel(), GetResilientKotlinDslScriptsModel())
+            "Resilient Sync",
+            listOf(GetGradleDslBaseScriptModel(), GetResilientGradleBuild(), GetResilientKotlinDslScriptsModel())
         )
         
     )

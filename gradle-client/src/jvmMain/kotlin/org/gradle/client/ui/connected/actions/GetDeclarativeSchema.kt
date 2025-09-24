@@ -1,9 +1,7 @@
 package org.gradle.client.ui.connected.actions
 
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -11,7 +9,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import org.gradle.client.ui.build.BuildTextField
 import org.gradle.client.ui.composables.CodeBlock
 import org.gradle.client.ui.composables.TitleLarge
-import org.gradle.client.ui.theme.spacing
+import org.gradle.client.ui.theme.Spacing
 import org.gradle.declarative.dsl.schema.*
 import org.gradle.declarative.dsl.tooling.models.DeclarativeSchemaModel
 
@@ -30,9 +28,9 @@ class GetDeclarativeSchema : GetModelAction<DeclarativeSchemaModel> {
 
         TitleLarge(displayName)
         SoftwareTypeDropDown(availableSoftwareTypes, selectedSoftwareType)
-        Spacer(Modifier.size(MaterialTheme.spacing.level4))
+        Spacing.VerticalLevel4()
         SoftwareTypeSchema(model, selectedSoftwareType.value)
-        Spacer(Modifier.size(MaterialTheme.spacing.level6))
+        Spacing.VerticalLevel6()
     }
 
     @Composable

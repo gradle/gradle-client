@@ -1,14 +1,12 @@
 package org.gradle.client.ui.connected.actions
 
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import org.gradle.client.ui.composables.LabelSmall
+import org.gradle.client.ui.composables.TitleMedium
+import org.gradle.client.ui.composables.TitleSmall
 import org.gradle.client.ui.composables.horizontalScrollContent
-import org.gradle.client.ui.theme.spacing
+import org.gradle.client.ui.theme.Spacing
 import org.gradle.tooling.model.gradle.GradleBuild
 
 class GetGradleBuild : GetModelAction<GradleBuild> {
@@ -21,23 +19,14 @@ class GetGradleBuild : GetModelAction<GradleBuild> {
     @Composable
     override fun ColumnScope.ModelContent(model: GradleBuild) {
         horizontalScrollContent {
-            Text(
-                text = "Root Gradle Build",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "Root Project Name: ${model.rootProject.name}",
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
-                text = "Build Directory: ${model.buildIdentifier.rootDir}",
-                style = MaterialTheme.typography.labelSmall
-            )
+            TitleMedium("Root Gradle Build")
+            LabelSmall("Root Project Name: ${model.rootProject.name}")
+            LabelSmall("Build Directory: ${model.buildIdentifier.rootDir}")
 
-            Spacer(Modifier.size(MaterialTheme.spacing.level4))
+            Spacing.VerticalLevel4()
             IncludedBuilds(model)
 
-            Spacer(Modifier.size(MaterialTheme.spacing.level4))
+            Spacing.VerticalLevel4()
             Projects(model)
         }
     }
@@ -45,46 +34,22 @@ class GetGradleBuild : GetModelAction<GradleBuild> {
     @Composable
     private
     fun IncludedBuilds(model: GradleBuild) {
-        Text(
-            text = "Included Builds (${model.includedBuilds.size}  total)",
-            style = MaterialTheme.typography.titleMedium
-        )
+        TitleMedium("Included Builds (${model.includedBuilds.size}  total)")
         model.includedBuilds.forEach { includedBuild ->
-            Text(
-                text = "${includedBuild.rootProject.name}",
-                style = MaterialTheme.typography.titleSmall
-            )
-            Text(
-                text = "Build Directory: ${includedBuild.buildIdentifier.rootDir}",
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
-                text = "Build Path: ${includedBuild.rootProject.projectIdentifier.projectPath}",
-                style = MaterialTheme.typography.labelSmall
-            )
+            TitleSmall(includedBuild.rootProject.name)
+            LabelSmall("Build Directory: ${includedBuild.buildIdentifier.rootDir}")
+            LabelSmall("Build Path: ${includedBuild.rootProject.projectIdentifier.projectPath}")
         }
     }
 
     @Composable
     private
     fun Projects(model: GradleBuild) {
-        Text(
-            text = "Projects (${model.projects.size}  total)",
-            style = MaterialTheme.typography.titleMedium
-        )
+        TitleMedium("Projects (${model.projects.size}  total)")
         model.projects.forEach { project ->
-            Text(
-                text = "${project.name}",
-                style = MaterialTheme.typography.titleSmall
-            )
-            Text(
-                text = "Project Directory: ${project.projectDirectory}",
-                style = MaterialTheme.typography.labelSmall
-            )
-            Text(
-                text = "Project Path: ${project.projectIdentifier.projectPath}",
-                style = MaterialTheme.typography.labelSmall
-            )
+            TitleSmall(project.name)
+            LabelSmall("Project Directory: ${project.projectDirectory}")
+            LabelSmall("Project Path: ${project.projectIdentifier.projectPath}")
         }
     }
 }

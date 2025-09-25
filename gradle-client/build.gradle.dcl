@@ -112,7 +112,7 @@ kotlinApplication {
         }
 
         nativeDistributions {
-            targetFormats = listOf("Dmg", "Msi", "Deb")
+            targetFormats = listOf("Deb", "Dmg", "Msi", "Rpm")
 
             packageName = "GradleClient"
             description = "Gradle Client"

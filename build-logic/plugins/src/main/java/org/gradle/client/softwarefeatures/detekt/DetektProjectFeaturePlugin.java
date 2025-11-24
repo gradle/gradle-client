@@ -4,24 +4,24 @@ import io.gitlab.arturbosch.detekt.extensions.DetektExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
-import org.gradle.api.internal.plugins.BindsSoftwareFeature;
-import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
-import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
+import org.gradle.api.internal.plugins.BindsProjectFeature;
+import org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder;
+import org.gradle.api.internal.plugins.ProjectFeatureBinding;
 
-import static org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder.bindingToTargetBuildModel;
+import static org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder.bindingToTargetBuildModel;
 
 @SuppressWarnings("UnstableApiUsage")
-@BindsSoftwareFeature(DetektSoftwareFeaturePlugin.Binding.class)
-abstract public class DetektSoftwareFeaturePlugin implements Plugin<Project> {
+@BindsProjectFeature(DetektProjectFeaturePlugin.Binding.class)
+abstract public class DetektProjectFeaturePlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
 
     }
 
-    static class Binding implements SoftwareFeatureBindingRegistration {
+    static class Binding implements ProjectFeatureBinding {
         @Override
-        public void register(SoftwareFeatureBindingBuilder builder) {
-            builder.bindSoftwareFeature("detekt", bindingToTargetBuildModel(Detekt.class, KotlinMultiplatformBuildModel.class),
+        public void bind(ProjectFeatureBindingBuilder builder) {
+            builder.bindProjectFeature("detekt", bindingToTargetBuildModel(Detekt.class, KotlinMultiplatformBuildModel.class),
                     (context, definition, buildModel, parent) -> {
 
                         Project project = context.getProject();

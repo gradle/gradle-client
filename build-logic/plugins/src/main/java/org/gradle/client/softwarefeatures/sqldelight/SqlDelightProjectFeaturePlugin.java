@@ -6,16 +6,16 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
-import org.gradle.api.internal.plugins.BindsSoftwareFeature;
-import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
-import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
+import org.gradle.api.internal.plugins.BindsProjectFeature;
+import org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder;
+import org.gradle.api.internal.plugins.ProjectFeatureBinding;
 
 import static java.util.Arrays.stream;
-import static org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder.bindingToTargetBuildModel;
+import static org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder.bindingToTargetBuildModel;
 
 @SuppressWarnings("UnstableApiUsage")
-@BindsSoftwareFeature(SqlDelightSoftwareFeaturePlugin.Binding.class)
-abstract public class SqlDelightSoftwareFeaturePlugin implements Plugin<Project> {
+@BindsProjectFeature(SqlDelightProjectFeaturePlugin.Binding.class)
+abstract public class SqlDelightProjectFeaturePlugin implements Plugin<Project> {
     private static final String SQLDELIGHT_GROUP = "app.cash.sqldelight";
     private static final String[] SQLDELIGHT_DEPENDENCY_MODULES = new String[] {
             "runtime",
@@ -27,16 +27,16 @@ abstract public class SqlDelightSoftwareFeaturePlugin implements Plugin<Project>
 
     }
 
-    static class Binding implements SoftwareFeatureBindingRegistration {
+    static class Binding implements ProjectFeatureBinding {
         @Override
-        public void register(SoftwareFeatureBindingBuilder builder) {
-            builder.bindSoftwareFeature("sqlDelight", bindingToTargetBuildModel(SqlDelight.class, KotlinMultiplatformBuildModel.class),
+        public void bind(ProjectFeatureBindingBuilder builder) {
+            builder.bindProjectFeature("sqlDelight", bindingToTargetBuildModel(SqlDelight.class, KotlinMultiplatformBuildModel.class),
                 (context, definition, buildModel, parent) -> {
                     Project project = context.getProject();
 
                     definition.getVersion().convention("2.0.2");
 
-                    KotlinMultiplatformBuildModel parentBuildModel = context.getOrCreateModel(parent);
+                    KotlinMultiplatformBuildModel parentBuildModel = context.getBuildModel(parent);
                     parentBuildModel.getKotlinMultiplatformExtension().jvm(jvmTarget -> {
                         NamedDomainObjectProvider<DependencyScopeConfiguration> sqlDelightConfiguration = project.getConfigurations().dependencyScope("sqlDelightTool", conf -> {
                             stream(SQLDELIGHT_DEPENDENCY_MODULES).forEach(module ->

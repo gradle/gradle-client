@@ -4,9 +4,9 @@ import kotlin.Unit;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
-import org.gradle.api.internal.plugins.BindsSoftwareFeature;
-import org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder;
-import org.gradle.api.internal.plugins.SoftwareFeatureBindingRegistration;
+import org.gradle.api.internal.plugins.BindsProjectFeature;
+import org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder;
+import org.gradle.api.internal.plugins.ProjectFeatureBinding;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
 import org.jetbrains.compose.desktop.application.dsl.*;
@@ -16,20 +16,20 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
 
-import static org.gradle.api.internal.plugins.SoftwareFeatureBindingBuilder.bindingToTargetBuildModel;
+import static org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder.bindingToTargetBuildModel;
 
 @SuppressWarnings("UnstableApiUsage")
-@BindsSoftwareFeature(ComposeSoftwareFeaturePlugin.Binding.class)
-abstract public class ComposeSoftwareFeaturePlugin implements Plugin<Project> {
+@BindsProjectFeature(ComposeProjectFeaturePlugin.Binding.class)
+abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
 
     }
 
-    static class Binding implements SoftwareFeatureBindingRegistration {
+    static class Binding implements ProjectFeatureBinding {
         @Override
-        public void register(SoftwareFeatureBindingBuilder builder) {
-            builder.bindSoftwareFeature("compose", bindingToTargetBuildModel(Compose.class, KotlinMultiplatformBuildModel.class),
+        public void bind(ProjectFeatureBindingBuilder builder) {
+            builder.bindProjectFeature("compose", bindingToTargetBuildModel(Compose.class, KotlinMultiplatformBuildModel.class),
                     (context, definition, buildModel, parent) -> {
                         Project project = context.getProject();
                         project.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
@@ -43,7 +43,7 @@ abstract public class ComposeSoftwareFeaturePlugin implements Plugin<Project> {
                             project.getPluginManager().apply("org.jetbrains.compose");
                             ((DefaultComposeBuildModel)buildModel).setComposeExtension(project.getExtensions().getByType(ComposeExtension.class));
                             DesktopExtension desktop =  buildModel.getComposeExtension().getExtensions().getByType(DesktopExtension.class);
-                            KotlinMultiplatformExtension kmpExtension = context.getOrCreateModel(parent).getKotlinMultiplatformExtension();
+                            KotlinMultiplatformExtension kmpExtension = context.getBuildModel(parent).getKotlinMultiplatformExtension();
                             JvmApplication application = desktop.getApplication();
                             JvmApplicationDistributions nativeDistributions = application.getNativeDistributions();
 

@@ -1,4 +1,4 @@
-package org.gradle.client.softwarefeatures.detekt;
+package org.gradle.client.projectfeatures.detekt;
 
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.RegularFile;

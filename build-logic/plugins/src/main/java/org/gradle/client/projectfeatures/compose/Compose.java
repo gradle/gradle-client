@@ -1,4 +1,4 @@
-package org.gradle.client.softwarefeatures.compose;
+package org.gradle.client.projectfeatures.compose;
 
 import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;

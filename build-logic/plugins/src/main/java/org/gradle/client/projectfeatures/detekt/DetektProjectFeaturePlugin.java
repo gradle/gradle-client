@@ -1,4 +1,4 @@
-package org.gradle.client.softwarefeatures.detekt;
+package org.gradle.client.projectfeatures.detekt;
 
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension;
 import org.gradle.api.Plugin;
@@ -21,7 +21,7 @@ abstract public class DetektProjectFeaturePlugin implements Plugin<Project> {
     static class Binding implements ProjectFeatureBinding {
         @Override
         public void bind(ProjectFeatureBindingBuilder builder) {
-            builder.bindProjectFeature("detekt", bindingToTargetBuildModel(Detekt.class, KotlinMultiplatformBuildModel.class),
+            builder.bindProjectFeatureToBuildModel("detekt", Detekt.class, KotlinMultiplatformBuildModel.class,
                     (context, definition, buildModel, parent) -> {
 
                         Project project = context.getProject();

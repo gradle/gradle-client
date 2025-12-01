@@ -1,4 +1,4 @@
-package org.gradle.client.softwarefeatures.compose;
+package org.gradle.client.projectfeatures.compose;
 
 import kotlin.Unit;
 import org.gradle.api.Plugin;
@@ -29,7 +29,7 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
     static class Binding implements ProjectFeatureBinding {
         @Override
         public void bind(ProjectFeatureBindingBuilder builder) {
-            builder.bindProjectFeature("compose", bindingToTargetBuildModel(Compose.class, KotlinMultiplatformBuildModel.class),
+            builder.bindProjectFeatureToBuildModel("compose", Compose.class, KotlinMultiplatformBuildModel.class,
                     (context, definition, buildModel, parent) -> {
                         Project project = context.getProject();
                         project.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");

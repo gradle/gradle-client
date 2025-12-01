@@ -1,5 +1,5 @@
 javaGradlePlugin {
-    description = "Declarative plugins containing custom software types for the gradle-client project."
+    description = "Declarative plugins containing custom project features for the gradle-client project."
 
     dependencies {
         api("org.gradle.experimental.kmp-ecosystem:org.gradle.experimental.kmp-ecosystem.gradle.plugin:0.1.46")
@@ -13,7 +13,7 @@ javaGradlePlugin {
 
     registers {
         id("org.gradle.client.ecosystem.custom-ecosystem") {
-            description = "A custom ecosystem plugin registering the Software Type plugins provided by this project"
+            description = "A custom ecosystem plugin registering the Project Feature plugins provided by this project"
             implementationClass = "org.gradle.client.ecosystem.CustomEcosystemPlugin"
         }
     }

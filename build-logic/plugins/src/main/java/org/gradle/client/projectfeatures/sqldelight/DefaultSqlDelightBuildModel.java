@@ -1,4 +1,4 @@
-package org.gradle.client.softwarefeatures.sqldelight;
+package org.gradle.client.projectfeatures.sqldelight;
 
 import app.cash.sqldelight.gradle.SqlDelightExtension;
 

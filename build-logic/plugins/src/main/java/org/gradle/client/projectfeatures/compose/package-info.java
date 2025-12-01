@@ -1,4 +1,4 @@
 @NullMarked
-package org.gradle.client.softwarefeatures.compose;
+package org.gradle.client.projectfeatures.compose;
 
 import org.jspecify.annotations.NullMarked;

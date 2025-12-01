@@ -1,4 +1,4 @@
-package org.gradle.client.softwarefeatures.sqldelight;
+package org.gradle.client.projectfeatures.sqldelight;
 
 import app.cash.sqldelight.gradle.SqlDelightExtension;
 import org.gradle.api.NamedDomainObjectProvider;
@@ -30,7 +30,7 @@ abstract public class SqlDelightProjectFeaturePlugin implements Plugin<Project> 
     static class Binding implements ProjectFeatureBinding {
         @Override
         public void bind(ProjectFeatureBindingBuilder builder) {
-            builder.bindProjectFeature("sqlDelight", bindingToTargetBuildModel(SqlDelight.class, KotlinMultiplatformBuildModel.class),
+            builder.bindProjectFeatureToBuildModel("sqlDelight", SqlDelight.class, KotlinMultiplatformBuildModel.class,
                 (context, definition, buildModel, parent) -> {
                     Project project = context.getProject();
 

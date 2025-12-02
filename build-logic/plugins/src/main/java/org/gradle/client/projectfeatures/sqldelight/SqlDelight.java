@@ -1,4 +1,4 @@
-package org.gradle.client.softwarefeatures.sqldelight;
+package org.gradle.client.projectfeatures.sqldelight;
 
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.internal.plugins.Definition;

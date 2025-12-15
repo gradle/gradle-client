@@ -59,7 +59,7 @@ jobs:
           add-job-summary: on-failure
           add-job-summary-as-pr-comment: on-failure
       - run: ./gradlew ${{ matrix.task }} -DagreePublicBuildScanTermOfService=yes --scan
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         with:
           name: ${{ matrix.os }}-${{ matrix.artifact_path }}-distribution

@@ -36,7 +36,7 @@ import org.gradle.client.ui.theme.transparency
 import org.gradle.declarative.dsl.schema.DataClass
 import org.gradle.declarative.dsl.schema.DataProperty
 import org.gradle.declarative.dsl.schema.SchemaMemberFunction
-import org.gradle.declarative.dsl.schema.SoftwareFeatureOrigin
+import org.gradle.declarative.dsl.schema.ProjectFeatureOrigin
 import org.gradle.internal.declarativedsl.analysis.TypeRefContext
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ElementNode
@@ -55,7 +55,7 @@ import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayOriginCo
 import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionContainer
 import org.jetbrains.skiko.Cursor
 
-@Suppress("TooManyFunctions") // this is a collection of the view `@Composable`s, it is expected to have many functions 
+@Suppress("TooManyFunctions") // this is a collection of the view `@Composable`s, it is expected to have many functions
 internal class ModelTreeRendering(
     private val typeRefContext: TypeRefContext,
     private val resolutionContainer: DocumentResolutionContainer,
@@ -208,8 +208,8 @@ internal class ModelTreeRendering(
         subFunction: SchemaMemberFunction,
         modifier: Modifier = Modifier
     ) {
-        subFunction.metadata.find { it is SoftwareFeatureOrigin }?.let { metadata ->
-            metadata as SoftwareFeatureOrigin
+        subFunction.metadata.find { it is ProjectFeatureOrigin }?.let { metadata ->
+            metadata as ProjectFeatureOrigin
             TitleSmall(
                 buildAnnotatedString {
                     val isProjectType = metadata.targetDefinitionClassName == "org.gradle.api.Project"
@@ -383,7 +383,7 @@ internal class ModelTreeRendering(
                 )
             }
         }
-        
+
     }
 
     private fun maybeInvalidDecoration(isInvalid: Boolean) =
@@ -537,13 +537,13 @@ internal fun highlightingForAllDocumentNodesByModelNode(
 
     val shadowedValueNodes = run {
         val propertyNodes = when (origin) {
-            is MergedProperties -> 
+            is MergedProperties ->
                 (origin.effectivePropertiesFromUnderlay + origin.effectivePropertiesFromOverlay).toList()
             is FromUnderlay -> listOf(origin.documentNode)
             is FromOverlay -> listOf(origin.documentNode)
             is MergedElements -> emptyList()
         }
-        
+
         val valuePresentation = if (node is PropertyNode)
             findValuePresenter(resolutionContainer, typeRefContext, node)
         else null
@@ -569,10 +569,10 @@ internal fun highlightingForAllDocumentNodesByModelNode(
         )
 
         is MergedProperties -> {
-            // In addition to the full property nodes that are shadowed according to the DOM overlay, 
+            // In addition to the full property nodes that are shadowed according to the DOM overlay,
             // if there is an element comprehension for this property,
             // also highlight the shadowed elements:
-            
+
             (origin.effectivePropertiesFromOverlay + origin.effectivePropertiesFromUnderlay).map {
                 it.highlightAs(EFFECTIVE, MODEL_NODE)
             } + (origin.shadowedPropertiesFromOverlay + origin.shadowedPropertiesFromUnderlay).map {

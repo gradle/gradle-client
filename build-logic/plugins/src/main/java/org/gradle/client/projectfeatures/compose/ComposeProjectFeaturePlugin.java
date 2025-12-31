@@ -73,6 +73,7 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
             Proguard proguardDefinition = buildTypeDefinition.getProguard();
             proguard.getOptimize().set(proguardDefinition.getOptimize());
             proguard.getObfuscate().set(proguardDefinition.getObfuscate());
+            proguard.getVersion().set(proguardDefinition.getVersion());
 
             proguardDefinition.getConfigurationFiles().get().forEach(f -> proguard.getConfigurationFiles().from(f));
         }

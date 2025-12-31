@@ -7,8 +7,8 @@ plugins {
     id("io.github.gradle.gradle-enterprise-conventions-plugin").version("0.10.2")
     id("org.gradle.toolchains.foojay-resolver-convention").version("0.8.0")
 
-    id("org.gradle.experimental.jvm-ecosystem").version("0.1.47")
-    id("org.gradle.experimental.kmp-ecosystem").version("0.1.47")
+    id("org.gradle.experimental.jvm-ecosystem").version("0.1.49")
+    id("org.gradle.experimental.kmp-ecosystem").version("0.1.49")
     id("org.gradle.client.ecosystem.custom-ecosystem")
 }
 

@@ -5,11 +5,8 @@ import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.internal.plugins.Definition;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Nested;
-import org.gradle.declarative.dsl.model.annotations.Configuring;
-import org.gradle.declarative.dsl.model.annotations.Restricted;
 
 public interface Compose extends Definition<ComposeBuildModel> {
-    @Restricted
     Property<String> getMainClass();
 
     NamedDomainObjectContainer<JvmArg> getJvmArgs();
@@ -17,16 +14,6 @@ public interface Compose extends Definition<ComposeBuildModel> {
     @Nested
     BuildTypes getBuildTypes();
 
-    @Configuring
-    default void buildTypes(Action<? super BuildTypes> action) {
-        action.execute(getBuildTypes());
-    }
-
     @Nested
     NativeDistributions getNativeDistributions();
-
-    @Configuring
-    default void nativeDistributions(Action<? super NativeDistributions> action) {
-        action.execute(getNativeDistributions());
-    }
 }

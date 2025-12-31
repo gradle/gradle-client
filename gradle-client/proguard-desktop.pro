@@ -40,6 +40,7 @@
 -dontwarn org.jetbrains.concurrency.**
 -dontwarn org.jetbrains.kotlin.**
 -dontwarn org.checkerframework.**
+-dontwarn kotlin.reflect.jvm.**
 
 # =========================================================================
 # KEEP

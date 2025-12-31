@@ -104,6 +104,7 @@ kotlinApplication {
         buildTypes {
             release {
                 proguard {
+                    version = "7.8.2"
                     optimize = false
                     obfuscate = false
                     configurationFiles = listOf(layout.projectDirectory.file("proguard-desktop.pro"))

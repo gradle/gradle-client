@@ -10,4 +10,6 @@ public interface Proguard {
     Property<Boolean> getObfuscate();
 
     ListProperty<RegularFile> getConfigurationFiles();
+
+    Property<String> getVersion();
 }

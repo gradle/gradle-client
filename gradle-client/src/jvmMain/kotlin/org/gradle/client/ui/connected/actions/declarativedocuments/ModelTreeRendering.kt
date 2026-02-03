@@ -25,11 +25,12 @@ import org.gradle.client.ui.composables.TitleSmall
 import org.gradle.client.ui.composables.semiTransparentIfNull
 import org.gradle.client.ui.connected.actions.accessAndConfigure
 import org.gradle.client.ui.connected.actions.addAndConfigure
-import org.gradle.client.ui.connected.actions.childElementNodes
+import org.gradle.client.ui.connected.actions.childElementNodesOfFunction
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingKind.EFFECTIVE
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingKind.SHADOWED
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingTarget.DOCUMENT_NODE
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingTarget.MODEL_NODE
+import org.gradle.client.ui.connected.actions.ifSuccess
 import org.gradle.client.ui.connected.actions.typeName
 import org.gradle.client.ui.theme.spacing
 import org.gradle.client.ui.theme.transparency
@@ -38,6 +39,7 @@ import org.gradle.declarative.dsl.schema.DataProperty
 import org.gradle.declarative.dsl.schema.SchemaMemberFunction
 import org.gradle.declarative.dsl.schema.ProjectFeatureOrigin
 import org.gradle.internal.declarativedsl.analysis.TypeRefContext
+import org.gradle.internal.declarativedsl.analysis.isReadOnly
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ElementNode
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.PropertyNode
@@ -81,25 +83,27 @@ internal class ModelTreeRendering(
                 MaterialTheme.spacing.VerticalLevel2()
                 type.properties.forEach { property ->
                     val propertyNodes = node.content.filterIsInstance<PropertyNode>()
-                        .filter { it.name == property.name }
+                        .filter { resolutionContainer.data(it).ifSuccess()?.property == property }
                     PropertyInfo(propertyNodes, property)
                 }
-                val accessAndConfigure = type.memberFunctions.accessAndConfigure
-                val accessAndConfigureNames = accessAndConfigure.map { it.simpleName }
-                val addAndConfigure = type.memberFunctions.addAndConfigure.filter { function ->
-                    function.simpleName !in accessAndConfigureNames
-                }
-                val addAndConfigureByName = addAndConfigure.associateBy { it.simpleName }
-                val elementsByAddAndConfigure = node.content
-                    .filterIsInstance<ElementNode>()
-                    .filter { it.name in addAndConfigureByName }
 
-                accessAndConfigure.forEach { subFunction ->
+                val accessAndConfigureFunctions = type.memberFunctions.accessAndConfigure
+                accessAndConfigureFunctions.forEach { subFunction ->
                     ConfiguringFunctionInfo(subFunction, node, indentLevel)
                     MaterialTheme.spacing.VerticalLevel2()
                 }
-                elementsByAddAndConfigure.forEach { element ->
-                    AddingFunctionInfo(element, indentLevel)
+
+                val addAndConfigureFunctions = type.memberFunctions.addAndConfigure
+                val addAndConfigureElementGroups = node.content
+                    .filterIsInstance<ElementNode>()
+                    .groupBy { elementFunctionOfNode(resolutionContainer, it) }
+                    .filterKeys { it in addAndConfigureFunctions } // => it != null
+                    .toSortedMap(compareBy { it!!.simpleName })
+
+                addAndConfigureElementGroups.forEach { (_, elements) ->
+                    elements.forEach { element ->
+                        AddingFunctionInfo(element, indentLevel)
+                    }
                 }
             }
         }
@@ -170,7 +174,7 @@ internal class ModelTreeRendering(
         if (parentNode is ElementNode && resolutionContainer.isUnresolvedBase(parentNode))
             return
 
-        val functionNodes = parentNode.childElementNodes(resolutionContainer, subFunction)
+        val functionNodes = parentNode.childElementNodesOfFunction(resolutionContainer, subFunction)
         if (functionNodes.isNotEmpty()) {
             functionNodes.forEach { functionNode ->
                 val functionType = functionNode.type(resolutionContainer) as? DataClass
@@ -235,6 +239,11 @@ internal class ModelTreeRendering(
         property: DataProperty
     ) {
         if (propertyNodes.isNotEmpty() && propertyNodes.all { resolutionContainer.isUnresolvedBase(it) }) {
+            return
+        }
+        if (property.isReadOnly && propertyNodes.isEmpty()) {
+            // Do not show the read-only properties, which are only useful in chained value factory calls
+            // like `foo.bar()`. The schema view should show them instead.
             return
         }
         val representativeNode = propertyNodes.lastOrNull()
@@ -581,6 +590,13 @@ internal fun highlightingForAllDocumentNodesByModelNode(
         }
     }
 }
+
+private fun elementFunctionOfNode(
+    resolutionContainer: DocumentResolutionContainer,
+    node: ElementNode
+): SchemaMemberFunction? =
+    resolutionContainer.data(node).ifSuccess()?.elementFactoryFunction
+
 
 internal data class HighlightingContext(
     private val viewModel: GetDeclarativeDocumentsModel,

@@ -19,7 +19,7 @@ kotlinApplication {
                 implementation(project(":build-action"))
                 implementation(project(":mutations-demo"))
 
-                implementation("org.gradle:gradle-tooling-api:9.4.0-milestone-4")
+                implementation("org.gradle:gradle-tooling-api:9.5.0-milestone-1")
 
                 implementation("com.arkivanov.decompose:decompose:3.3.0")
                 implementation("com.arkivanov.decompose:extensions-compose:3.3.0")
@@ -36,9 +36,9 @@ kotlinApplication {
                 implementation("org.slf4j:slf4j-api:2.0.17")
                 implementation("ch.qos.logback:logback-classic:1.5.18")
 
-                implementation("org.gradle:gradle-declarative-dsl-core:9.4.0-milestone-4")
-                implementation("org.gradle:gradle-declarative-dsl-evaluator:9.4.0-milestone-4")
-                implementation("org.gradle:gradle-declarative-dsl-tooling-models:9.4.0-milestone-4")
+                implementation("org.gradle:gradle-declarative-dsl-core:9.5.0-milestone-1")
+                implementation("org.gradle:gradle-declarative-dsl-evaluator:9.5.0-milestone-1")
+                implementation("org.gradle:gradle-declarative-dsl-tooling-models:9.5.0-milestone-1")
                 implementation("org.jspecify:jspecify:1.0.0")
 
                 runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")

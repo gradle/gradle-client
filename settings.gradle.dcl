@@ -9,6 +9,7 @@ plugins {
 
     id("org.gradle.experimental.jvm-ecosystem").version("0.1.49")
     id("org.gradle.experimental.kmp-ecosystem").version("0.1.49")
+    id("org.gradle.experimental.plugin-ecosystem").version("0.1.49")
     id("org.gradle.client.ecosystem.custom-ecosystem")
 }
 
@@ -32,3 +33,4 @@ rootProject.name = "gradle-client-root"
 include(":gradle-client")
 include(":build-action")
 include(":mutations-demo")
+include(":plugins-copied-to-root-build")

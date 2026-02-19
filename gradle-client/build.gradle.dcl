@@ -132,7 +132,7 @@ kotlinApplication {
                 "jdk.compiler",
                 "jdk.crypto.ec",
                 "jdk.security.auth",
-                "jdk.unsupported",
+                "jdk.unsupported"
             )
 
             linux {

@@ -6,12 +6,17 @@ import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
+import org.gradle.api.artifacts.dsl.DependencyFactory;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
-import org.gradle.api.internal.plugins.BindsProjectFeature;
-import org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder;
-import org.gradle.api.internal.plugins.ProjectFeatureBinding;
+import org.gradle.features.annotations.BindsProjectFeature;
+import org.gradle.features.binding.ProjectFeatureBindingBuilder;
+import org.gradle.features.binding.ProjectFeatureBinding;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.PluginManager;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,31 +43,31 @@ abstract public class SqlDelightProjectFeaturePlugin implements Plugin<Project> 
         public void bind(ProjectFeatureBindingBuilder builder) {
             builder.bindProjectFeatureToBuildModel("sqlDelight", SqlDelight.class, KotlinMultiplatformBuildModel.class,
                 (context, definition, buildModel, parent) -> {
-                    Project project = context.getProject();
+                    Services services = context.getObjectFactory().newInstance(Services.class);
 
                     definition.getVersion().convention("2.1.0");
 
                     KotlinMultiplatformBuildModel parentBuildModel = context.getBuildModel(parent);
                     parentBuildModel.getKotlinMultiplatformExtension().jvm(jvmTarget -> {
-                        NamedDomainObjectProvider<DependencyScopeConfiguration> sqlDelightConfiguration = project.getConfigurations().dependencyScope("sqlDelightTool", conf -> {
+                        NamedDomainObjectProvider<DependencyScopeConfiguration> sqlDelightConfiguration = services.getProject().getConfigurations().dependencyScope("sqlDelightTool", conf -> {
                             stream(SQLDELIGHT_DEPENDENCY_MODULES).forEach(module ->
-                                conf.getDependencies().addLater(definition.getVersion().map(version -> project.getDependencyFactory().create(SQLDELIGHT_GROUP + ":" + module + ":" + version)))
+                                conf.getDependencies().addLater(definition.getVersion().map(version -> services.getDependencyFactory().create(SQLDELIGHT_GROUP + ":" + module + ":" + version)))
                             );
                         });
 
-                        project.getConfigurations().named(jvmTarget.getCompilations().getByName("main").getDefaultSourceSet().getImplementationConfigurationName(), conf ->
+                        services.getProject().getConfigurations().named(jvmTarget.getCompilations().getByName("main").getDefaultSourceSet().getImplementationConfigurationName(), conf ->
                                 conf.extendsFrom(sqlDelightConfiguration.get())
                         );
                     });
 
-                    project.getPluginManager().apply("app.cash.sqldelight");
-                    ((DefaultSqlDelightBuildModel) buildModel).setSqlDelightExtension(project.getExtensions().getByType(SqlDelightExtension.class));
+                    services.getPluginManager().apply("app.cash.sqldelight");
+                    ((DefaultSqlDelightBuildModel) buildModel).setSqlDelightExtension(services.getProject().getExtensions().getByType(SqlDelightExtension.class));
 
                     // https://github.com/gradle/gradle/issues/28043
-                    Provider<Set<Database>> featureDatabasesProvider = project.provider(() -> Collections.unmodifiableSet(definition.getDatabases()));
+                    Provider<Set<Database>> featureDatabasesProvider = services.getProviders().provider(() -> Collections.unmodifiableSet(definition.getDatabases()));
 
                     Provider<Set<SqlDelightDatabase>> sqlDelightDatabases = featureDatabasesProvider.map(featureDatabases -> featureDatabases.stream().map(featureDatabase -> {
-                        SqlDelightDatabase database = project.getObjects().newInstance(SqlDelightDatabase.class, featureDatabase.getName());
+                        SqlDelightDatabase database = services.getObjects().newInstance(SqlDelightDatabase.class, featureDatabase.getName());
 
                         database.getPackageName().set(featureDatabase.getPackageName());
                         database.getVerifyDefinitions().set(featureDatabase.getVerifyDefinitions());
@@ -74,7 +79,26 @@ abstract public class SqlDelightProjectFeaturePlugin implements Plugin<Project> 
                     }).collect(Collectors.toUnmodifiableSet()));
 
                         buildModel.getSqlDelightExtension().getDatabases().addAllLater(sqlDelightDatabases);
-                }).withBuildModelImplementationType(DefaultSqlDelightBuildModel.class);
+                })
+                .withUnsafeApplyAction()
+                .withBuildModelImplementationType(DefaultSqlDelightBuildModel.class);
+        }
+
+        interface Services {
+            @Inject
+            PluginManager getPluginManager();
+
+            @Inject
+            DependencyFactory getDependencyFactory();
+
+            @Inject
+            ProviderFactory getProviders();
+
+            @Inject
+            ObjectFactory getObjects();
+
+            @Inject
+            Project getProject();
         }
     }
 }

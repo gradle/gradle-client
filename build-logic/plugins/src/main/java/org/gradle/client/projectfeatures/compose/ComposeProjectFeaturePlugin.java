@@ -4,19 +4,20 @@ import kotlin.Unit;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
-import org.gradle.api.internal.plugins.BindsProjectFeature;
-import org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder;
-import org.gradle.api.internal.plugins.ProjectFeatureBinding;
+import org.gradle.features.annotations.BindsProjectFeature;
+import org.gradle.features.binding.ProjectFeatureBindingBuilder;
+import org.gradle.features.binding.ProjectFeatureBinding;
+import org.gradle.api.plugins.PluginManager;
+import org.gradle.api.provider.ProviderFactory;
 import org.jetbrains.compose.ComposeExtension;
 import org.jetbrains.compose.desktop.DesktopExtension;
 import org.jetbrains.compose.desktop.application.dsl.*;
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
-
-import static org.gradle.api.internal.plugins.ProjectFeatureBindingBuilder.bindingToTargetBuildModel;
 
 @SuppressWarnings("UnstableApiUsage")
 @BindsProjectFeature(ComposeProjectFeaturePlugin.Binding.class)
@@ -31,17 +32,17 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
         public void bind(ProjectFeatureBindingBuilder builder) {
             builder.bindProjectFeatureToBuildModel("compose", Compose.class, KotlinMultiplatformBuildModel.class,
                     (context, definition, buildModel, parent) -> {
-                        Project project = context.getProject();
-                        project.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
-                        project.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
+                        Services services = context.getObjectFactory().newInstance(Services.class);
+                        services.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
+                        services.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
 
-                        definition.getNativeDistributions().getPackageVersion().convention(project.provider(() -> project.getVersion().toString()));
+                        definition.getNativeDistributions().getPackageVersion().convention(services.getProviders().provider(() -> services.getProject().getVersion().toString()));
 
                         // Many of the underlying extension elements are not provider-aware, so we have to do
                         // this in an afterEvaluate block
-                        project.afterEvaluate(p -> {
-                            project.getPluginManager().apply("org.jetbrains.compose");
-                            ((DefaultComposeBuildModel)buildModel).setComposeExtension(project.getExtensions().getByType(ComposeExtension.class));
+                        services.getProject().afterEvaluate(p -> {
+                            services.getPluginManager().apply("org.jetbrains.compose");
+                            ((DefaultComposeBuildModel)buildModel).setComposeExtension(services.getProject().getExtensions().getByType(ComposeExtension.class));
                             DesktopExtension desktop =  buildModel.getComposeExtension().getExtensions().getByType(DesktopExtension.class);
                             KotlinMultiplatformExtension kmpExtension = context.getBuildModel(parent).getKotlinMultiplatformExtension();
                             JvmApplication application = desktop.getApplication();
@@ -61,7 +62,9 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
                                 });
                             });
                         });
-                    }).withBuildModelImplementationType(DefaultComposeBuildModel.class);
+                    })
+                .withUnsafeApplyAction()
+                .withBuildModelImplementationType(DefaultComposeBuildModel.class);
         }
 
         private static void wireBuildTypes(Compose composeBuildModel, JvmApplicationBuildTypes buildTypes) {
@@ -112,6 +115,17 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
 
         private static void wireLinux(Linux linuxDefinition, LinuxPlatformSettings linux) {
             linux.getIconFile().set(linuxDefinition.getIconFile());
+        }
+
+        interface Services {
+            @Inject
+            PluginManager getPluginManager();
+
+            @Inject
+            ProviderFactory getProviders();
+
+            @Inject
+            Project getProject();
         }
     }
 }

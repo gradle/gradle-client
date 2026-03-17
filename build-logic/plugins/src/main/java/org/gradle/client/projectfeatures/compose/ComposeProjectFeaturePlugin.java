@@ -36,7 +36,10 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
                         services.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
                         services.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
 
-                        definition.getNativeDistributions().getPackageVersion().convention(services.getProviders().provider(() -> services.getProject().getVersion().toString()));
+                        buildModel.getPackageVersion().set(
+                            definition.getNativeDistributions().getPackageVersion()
+                                .orElse(services.getProviders().provider(() -> services.getProject().getVersion().toString()))
+                        );
 
                         // Many of the underlying extension elements are not provider-aware, so we have to do
                         // this in an afterEvaluate block
@@ -48,7 +51,7 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
                             JvmApplication application = desktop.getApplication();
                             JvmApplicationDistributions nativeDistributions = application.getNativeDistributions();
 
-                            wireNativeDistribution(definition.getNativeDistributions(), nativeDistributions);
+                            wireNativeDistribution(definition.getNativeDistributions(), nativeDistributions, buildModel.getPackageVersion().get());
                             application.setMainClass(definition.getMainClass().get());
                             definition.getJvmArgs().forEach(jvmArg -> application.getJvmArgs().add(jvmArg.getName() + jvmArg.getValue().get()));
 
@@ -81,11 +84,11 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
             proguardDefinition.getConfigurationFiles().get().forEach(f -> proguard.getConfigurationFiles().from(f));
         }
 
-        private static void wireNativeDistribution(NativeDistributions nativeDistributionsDefinition, JvmApplicationDistributions nativeDistributions) {
+        private static void wireNativeDistribution(NativeDistributions nativeDistributionsDefinition, JvmApplicationDistributions nativeDistributions, String packageVersion) {
             nativeDistributions.setTargetFormats(EnumSet.copyOf(nativeDistributionsDefinition.getTargetFormats().get().stream().map(TargetFormat::valueOf).collect(Collectors.toList())));
 
             nativeDistributions.setPackageName(nativeDistributionsDefinition.getPackageName().get());
-            nativeDistributions.setPackageVersion(nativeDistributionsDefinition.getPackageVersion().get());
+            nativeDistributions.setPackageVersion(packageVersion);
             nativeDistributions.setDescription(nativeDistributionsDefinition.getDescription().get());
             nativeDistributions.setVendor(nativeDistributionsDefinition.getVendor().get());
             nativeDistributions.setCopyright(nativeDistributionsDefinition.getCopyrightYear().map(y -> "© " + y + " the original author or authors.").get());

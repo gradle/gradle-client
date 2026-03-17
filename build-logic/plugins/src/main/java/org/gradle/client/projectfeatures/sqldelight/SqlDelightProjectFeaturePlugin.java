@@ -45,13 +45,13 @@ abstract public class SqlDelightProjectFeaturePlugin implements Plugin<Project> 
                 (context, definition, buildModel, parent) -> {
                     Services services = context.getObjectFactory().newInstance(Services.class);
 
-                    definition.getVersion().convention("2.1.0");
+                    buildModel.getVersion().set(definition.getVersion().orElse("2.1.0"));
 
                     KotlinMultiplatformBuildModel parentBuildModel = context.getBuildModel(parent);
                     parentBuildModel.getKotlinMultiplatformExtension().jvm(jvmTarget -> {
                         NamedDomainObjectProvider<DependencyScopeConfiguration> sqlDelightConfiguration = services.getProject().getConfigurations().dependencyScope("sqlDelightTool", conf -> {
                             stream(SQLDELIGHT_DEPENDENCY_MODULES).forEach(module ->
-                                conf.getDependencies().addLater(definition.getVersion().map(version -> services.getDependencyFactory().create(SQLDELIGHT_GROUP + ":" + module + ":" + version)))
+                                conf.getDependencies().addLater(buildModel.getVersion().map(version -> services.getDependencyFactory().create(SQLDELIGHT_GROUP + ":" + module + ":" + version)))
                             );
                         });
 
@@ -78,7 +78,7 @@ abstract public class SqlDelightProjectFeaturePlugin implements Plugin<Project> 
                         return database;
                     }).collect(Collectors.toUnmodifiableSet()));
 
-                        buildModel.getSqlDelightExtension().getDatabases().addAllLater(sqlDelightDatabases);
+                    buildModel.getSqlDelightExtension().getDatabases().addAllLater(sqlDelightDatabases);
                 })
                 .withUnsafeApplyAction()
                 .withBuildModelImplementationType(DefaultSqlDelightBuildModel.class);

@@ -2,7 +2,7 @@ package org.gradle.client.projectfeatures.compose;
 
 import org.jetbrains.compose.ComposeExtension;
 
-public class DefaultComposeBuildModel implements ComposeBuildModel {
+abstract public class DefaultComposeBuildModel implements ComposeBuildModel {
     private ComposeExtension composeExtension;
 
     @Override

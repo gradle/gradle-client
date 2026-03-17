@@ -2,7 +2,7 @@ package org.gradle.client.projectfeatures.sqldelight;
 
 import app.cash.sqldelight.gradle.SqlDelightExtension;
 
-public class DefaultSqlDelightBuildModel implements SqlDelightBuildModel {
+abstract public class DefaultSqlDelightBuildModel implements SqlDelightBuildModel {
     private SqlDelightExtension sqlDelightExtension;
 
     @Override

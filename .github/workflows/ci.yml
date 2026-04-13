@@ -65,7 +65,7 @@ jobs:
           name: ${{ matrix.os }}-${{ matrix.artifact_path }}-distribution
           path: gradle-client/build/compose/binaries/main-release/${{ matrix.artifact_path }}
           if-no-files-found: error
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: true

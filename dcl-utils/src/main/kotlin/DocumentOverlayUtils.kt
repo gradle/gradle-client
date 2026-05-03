@@ -1,5 +1,3 @@
-package org.gradle.client.core.gradle.dcl
-
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.DocumentResolution
 import org.gradle.internal.declarativedsl.dom.UnresolvedBase
@@ -10,6 +8,7 @@ import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionConta
 import org.gradle.internal.declarativedsl.dom.resolution.DocumentWithResolution
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils.resolvedDocument
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisSequenceResult
+import org.gradle.internal.declarativedsl.evaluator.runner.AnalysisStepResult
 import org.gradle.internal.declarativedsl.evaluator.runner.stepResultOrPartialResult
 import org.gradle.internal.declarativedsl.language.SourceData
 import org.gradle.internal.declarativedsl.language.SyntheticallyProduced
@@ -59,7 +58,8 @@ fun DeclarativeDocument.nodeAt(fileIdentifier: String, offset: Int): Declarative
 }
 
 fun settingsWithNoOverlayOrigin(analysisSequenceResult: AnalysisSequenceResult): DocumentOverlayResult? {
-    val docs = analysisSequenceResult.stepResults.map { it.value.stepResultOrPartialResult.resolvedDocument() }
+    val docs = analysisSequenceResult.stepResults.mapNotNull {
+        (it.value.stepResultOrPartialResult as? AnalysisStepResult.PassedAnalysisStepResult)?.resolvedDocument() }
     if (docs.isEmpty())
         return null
 
@@ -67,7 +67,7 @@ fun settingsWithNoOverlayOrigin(analysisSequenceResult: AnalysisSequenceResult):
 }
 
 
-internal fun indexBasedOverlayResultFromDocuments(docs: List<DocumentWithResolution>): DocumentOverlayResult {
+fun indexBasedOverlayResultFromDocuments(docs: List<DocumentWithResolution>): DocumentOverlayResult {
     val emptyDoc = DocumentWithResolution(
         object : DeclarativeDocument {
             override val content: List<DeclarativeDocument.DocumentNode> = emptyList()
@@ -91,12 +91,12 @@ internal fun indexBasedOverlayResultFromDocuments(docs: List<DocumentWithResolut
 /**
  * A resolution results container collected from multiple resolved instances of the same document (or multiple
  * different instances of the same document, no referential equality required).
- * 
+ *
  * The document parts are matched based on indices.
- * 
+ *
  * If any of the [docs] is different from the others, the result is undefined (likely to be a broken container).
  */
-internal fun indexBasedMultiResolutionContainer(docs: List<DocumentWithResolution>): DocumentResolutionContainer {
+fun indexBasedMultiResolutionContainer(docs: List<DocumentWithResolution>): DocumentResolutionContainer {
     val indicesMaps: Map<DocumentWithResolution, Map<IntRange, DeclarativeDocument.Node>> = docs.associateWith {
         buildMap {
             fun visitValue(valueNode: DeclarativeDocument.ValueNode) {
@@ -156,7 +156,7 @@ internal fun indexBasedMultiResolutionContainer(docs: List<DocumentWithResolutio
     }
 }
 
-internal fun DocumentResolutionContainer.isUnresolvedBase(node: DeclarativeDocument.Node): Boolean {
+fun DocumentResolutionContainer.isUnresolvedBase(node: DeclarativeDocument.Node): Boolean {
     val resolution = when (node) {
         is DeclarativeDocument.DocumentNode -> data(node)
         is DeclarativeDocument.ValueNode -> data(node)

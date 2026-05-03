@@ -9,7 +9,6 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.gradle.client.build.model.ResolvedDomPrerequisites
-import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils
 import org.gradle.internal.declarativedsl.evaluator.main.SimpleAnalysisEvaluator
 import java.io.File
 
@@ -44,7 +43,7 @@ class EffectiveProjectDefinitionCommand : DclCommand("effective-project-definiti
             put("settingsFile", prerequisites.settingsFile.path)
             put("buildFile", projectInfo.projectBuildFile.path)
             put("content", buildJsonArray {
-                with(DomRenderer(withUnusedMembers, fullDom)) {
+                with(DomJsonRenderer(withUnusedMembers, fullDom)) {
                     fullDom.document.content.forEach { visitNode(it) }
                 }
             })

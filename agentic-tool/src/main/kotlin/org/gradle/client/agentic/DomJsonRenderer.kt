@@ -38,7 +38,7 @@ import kotlin.collections.forEach
 import kotlin.collections.orEmpty
 
 @Suppress("TooManyFunctions")
-class DomRenderer(
+class DomJsonRenderer(
     val withUnusedMembers: Boolean,
     val dom: DocumentOverlayResult
 ) {

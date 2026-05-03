@@ -9,10 +9,6 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.gradle.client.build.model.ResolvedDomPrerequisites
-import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
-import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ElementNode
-import org.gradle.internal.declarativedsl.dom.DocumentResolution
-import org.gradle.internal.declarativedsl.dom.DocumentResolution.ElementResolution.SuccessfulElementResolution
 import org.gradle.internal.declarativedsl.evaluator.main.SimpleAnalysisEvaluator
 import settingsWithNoOverlayOrigin
 
@@ -40,7 +36,7 @@ class SettingsDefinitionCommand : DclCommand("settings-definition") {
         return buildJsonObject {
             put("settingsFile", prerequisites.settingsFile.path)
             put("content", buildJsonArray {
-                with(DomRenderer(withUnusedMembers, dom)) {
+                with(DomJsonRenderer(withUnusedMembers, dom)) {
                     dom.document.content.forEach { visitNode(it) }
                 }
             })

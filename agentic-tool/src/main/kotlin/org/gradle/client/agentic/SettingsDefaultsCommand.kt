@@ -13,7 +13,6 @@ import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.E
 import org.gradle.internal.declarativedsl.dom.DocumentResolution.ElementResolution.SuccessfulElementResolution
 import org.gradle.internal.declarativedsl.evaluator.main.SimpleAnalysisEvaluator
 import settingsWithNoOverlayOrigin
-import kotlin.contracts.contract
 
 class SettingsDefaultsCommand : DclCommand("settings-defaults") {
 
@@ -48,7 +47,7 @@ class SettingsDefaultsCommand : DclCommand("settings-defaults") {
         return buildJsonObject {
             put("settingsFile", prerequisites.settingsFile.path)
             put("content", buildJsonArray {
-                with(DomRenderer(withUnusedMembers, dom)) {
+                with(DomJsonRenderer(withUnusedMembers, dom)) {
                     val defaultsBlocks =
                         dom.document.content.filterIsInstance<ElementNode>()
                             .filter {

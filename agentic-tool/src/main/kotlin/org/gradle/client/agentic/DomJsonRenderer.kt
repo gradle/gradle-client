@@ -1,6 +1,7 @@
 package org.gradle.client.agentic
 
 import kotlinx.serialization.json.JsonArrayBuilder
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
@@ -23,6 +24,7 @@ import org.gradle.declarative.dsl.schema.ProjectFeatureOrigin
 import org.gradle.declarative.dsl.schema.SchemaItemMetadata
 import org.gradle.declarative.dsl.schema.SchemaMemberFunction
 import org.gradle.declarative.dsl.schema.UnsafeSchemaItem
+import org.gradle.internal.declarativedsl.analysis.isReadOnly
 import org.gradle.internal.declarativedsl.analysis.ref
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ElementNode
@@ -40,27 +42,28 @@ import kotlin.collections.orEmpty
 @Suppress("TooManyFunctions")
 class DomJsonRenderer(
     val withUnusedMembers: Boolean,
-    val dom: DocumentOverlayResult
+    val dom: DocumentOverlayResult,
+    val documentationProvider: DocumentationProvider,
 ) {
     @Suppress("ComplexMethod")
-    fun JsonArrayBuilder.visitNode(node: DeclarativeDocument.DocumentNode) {
+    fun JsonArrayBuilder.visitNode(inClass: DataClass?, node: DeclarativeDocument.DocumentNode) {
         when (node) {
             is ElementNode -> addJsonObject {
-                val type = putElementHeaderAndGetType(node)
+                val type = putElementHeaderAndGetType(node) as? DataClass
 
                 val properties = node.content.filterIsInstance<PropertyNode>()
-                val unusedProperties = (type as? DataClass)?.properties?.toSet()
+                val unusedProperties = type?.properties?.toSet()
                     ?.minus(properties.mapNotNull { it.asResolved(dom)?.property }.toSet())
                     .orEmpty()
 
                 if (properties.isNotEmpty()) {
                     put("properties", buildJsonObject {
-                        properties.forEach { putProperty(it) }
+                        properties.forEach { put(it.name, propertyInfo(type, it)) }
                     })
                 }
-                if (withUnusedMembers) {
+                if (withUnusedMembers && unusedProperties.isNotEmpty()) {
                     put("unusedProperties", buildJsonObject {
-                        unusedProperties.forEach { property -> putUnusedProperty(property) }
+                        unusedProperties.forEach { put(it.name, unusedPropertyInfo(type!!, it)) }
                     })
                 }
 
@@ -68,44 +71,56 @@ class DomJsonRenderer(
                     node.content.filterIsInstance<ElementNode>().partition { isFeatureUsageElement(it) }
 
                 if (features.isNotEmpty()) {
-                    put("features", buildJsonArray { features.forEach { visitNode(it) } })
+                    put("features", buildJsonArray { features.forEach { visitNode(type, it) } })
                 }
                 if (nestedObjects.isNotEmpty()) {
-                    putJsonArray("nestedObjects") { nestedObjects.forEach { visitNode(it) } }
+                    putJsonArray("nestedObjects") { nestedObjects.forEach { visitNode(type, it) } }
                 }
 
-                val usedFunctions = node.content.filterIsInstance<ElementNode>()
+                val usedFunctions = node.content.asSequence()
+                    .filterIsInstance<ElementNode>()
                     .map(dom.overlayResolutionContainer::data)
                     .filterIsInstance<SuccessfulElementResolution>()
                     .map { it.elementFactoryFunction }
                     .toSet()
 
-                val unusedNestedObjects = (type as? DataClass)?.memberFunctions
+                val (unusedFeatures, unusedNestedObjects) = type?.memberFunctions
                     ?.filter { it.semantics is ConfigureSemantics && it !in usedFunctions }
                     .orEmpty()
+                    .partition { isFeatureUsageFunction(it) }
 
-                if (withUnusedMembers) {
+                if (withUnusedMembers && unusedFeatures.isNotEmpty()) {
+                    putJsonArray("unusedFeatures") {
+                        unusedFeatures.forEach { add(unusedNestedObject(type!!, it)) }
+                    }
+                }
+                if (withUnusedMembers && unusedNestedObjects.isNotEmpty()) {
                     putJsonArray("unusedNestedObjects") {
-                        unusedNestedObjects.forEach { putUnusedNestedObject(it) }
+                        unusedNestedObjects.forEach { add(unusedNestedObject(type!!, it)) }
                     }
                 }
 
                 val errors = node.content.filterIsInstance<ErrorNode>()
                 if (errors.isNotEmpty()) {
                     putJsonArray("errors") {
-                        errors.forEach { putErrorNode(dom, it) }
+                        errors.forEach { add(errorNode(dom, it)) }
                     }
+                }
+
+                if (inClass != null) {
+                    documentationProvider.memberDocumentation(inClass.name.qualifiedName, node.name)
+                        ?.let { put("documentation", it) }
                 }
             }
 
-            is PropertyNode -> Unit // no handling at top level
-            is ErrorNode -> putErrorNode(dom, node)
+            is PropertyNode -> add(propertyInfo(inClass, node))
+            is ErrorNode -> add(errorNode(dom, node))
         }
     }
 
-    private fun isFeatureUsageElement(node1: ElementNode): Boolean =
-        (dom.overlayResolutionContainer.data(node1) as? SuccessfulElementResolution)
-            ?.elementFactoryFunction?.metadata?.any { it is ProjectFeatureOrigin } == true
+    private fun isFeatureUsageElement(node: ElementNode): Boolean =
+        (dom.overlayResolutionContainer.data(node) as? SuccessfulElementResolution)
+            ?.elementFactoryFunction?.let(::isFeatureUsageFunction) == true
 
     private fun JsonObjectBuilder.putElementHeaderAndGetType(
         node: ElementNode,
@@ -136,98 +151,110 @@ class DomJsonRenderer(
 
         if (type != null) {
             put("type", type.ref.typeName)
+            if (type is DataType.ClassDataType) {
+                documentationProvider.classDocumentation(type.name.qualifiedName)
+                    ?.let { put("typeDocumentation", it) }
+            }
         }
 
         elementMetadata(function)
 
         sourceLocation(overlayOrigin, node)
+
         return type
     }
 
-    fun JsonObjectBuilder.putProperty(property: PropertyNode) {
+    fun propertyInfo(inType: DataClass?, property: PropertyNode): JsonObject {
         val resolved = dom.overlayResolutionContainer.data(property)
-        put(
-            property.name, buildJsonObject {
-                if (property.augmentation == PropertyNode.PropertyAugmentation.Plus) {
-                    put("augmentedWithPlusAssign", true)
-                }
-                when (resolved) {
-                    is DocumentResolution.PropertyResolution.PropertyAssignmentResolved -> {
-                        put("type", resolved.property.valueType.typeName)
-                    }
-
-                    is DocumentResolution.PropertyResolution.PropertyNotAssigned -> {
-                        put("isUnresolved", true)
-                        putJsonArray("causes") {
-                            userFriendlyErrorMessages(property, resolved).forEach(::add)
-                        }
+        return buildJsonObject {
+            if (property.augmentation == PropertyNode.PropertyAugmentation.Plus) {
+                put("augmentedWithPlusAssign", true)
+            }
+            when (resolved) {
+                is DocumentResolution.PropertyResolution.PropertyAssignmentResolved -> {
+                    put("type", resolved.property.valueType.typeName)
+                    if (resolved.property.isReadOnly) {
+                        put("isReadOnly", true)
                     }
                 }
 
-                val origin = dom.overlayNodeOriginContainer.data(property)
-
-                sourceLocation(origin, property)
-                putValue(property.value, dom)
-                if (origin is OverlayNodeOrigin.MergedProperties) {
-                    val effective = origin.effectivePropertiesFromUnderlay +
-                        origin.effectivePropertiesFromOverlay
-
-                    if (effective.isNotEmpty()) {
-                        putJsonArray("multipartEffectiveValue") {
-                            effective.forEach { putValueInline(it.value, dom) }
-                        }
-                    }
-
-                    val shadowed = origin.shadowedPropertiesFromUnderlay +
-                        origin.shadowedPropertiesFromOverlay
-
-                    if (shadowed.isNotEmpty()) {
-                        putJsonArray("overridesValues") {
-                            shadowed.forEach { putValueInline(it.value, dom) }
-                        }
+                is DocumentResolution.PropertyResolution.PropertyNotAssigned -> {
+                    put("isUnresolved", true)
+                    putJsonArray("causes") {
+                        userFriendlyErrorMessages(property, resolved).forEach(::add)
                     }
                 }
-            })
-    }
+            }
 
-    private fun JsonObjectBuilder.putUnusedProperty(property: DataProperty) {
-        put(property.name, buildJsonObject {
-            put("type", property.valueType.typeName)
-        })
-    }
+            val origin = dom.overlayNodeOriginContainer.data(property)
 
-    private fun JsonArrayBuilder.putUnusedNestedObject(function: SchemaMemberFunction) {
-        addJsonObject {
-            put("name", function.simpleName)
-            put("type", (function.semantics as ConfigureSemantics).configuredType.typeName)
-            put(
-                "isBlock",
-                (function.semantics as ConfigureSemantics).configureBlockRequirement.requires
-            )
-            if (function.parameters.isNotEmpty()) {
-                putJsonArray("parameters") {
-                    function.parameters.forEach { param ->
-                        addJsonObject {
-                            put("name", param.name)
-                            put("type", param.type.typeName)
-                        }
+            sourceLocation(origin, property)
+            putValue(property.value, dom)
+            if (origin is OverlayNodeOrigin.MergedProperties) {
+                val effective = origin.effectivePropertiesFromUnderlay +
+                    origin.effectivePropertiesFromOverlay
+
+                if (effective.isNotEmpty()) {
+                    putJsonArray("multipartEffectiveValue") {
+                        effective.forEach { putValueInline(it.value, dom) }
                     }
                 }
+
+                val shadowed = origin.shadowedPropertiesFromUnderlay +
+                    origin.shadowedPropertiesFromOverlay
+
+                if (shadowed.isNotEmpty()) {
+                    putJsonArray("overridesValues") {
+                        shadowed.forEach { putValueInline(it.value, dom) }
+                    }
+                }
+            }
+
+            if (inType != null) {
+                documentationProvider.memberDocumentation(inType.name.qualifiedName, property.name)
+                    ?.let { put("documentation", it) }
             }
         }
     }
 
-    private fun JsonArrayBuilder.putErrorNode(
+    private fun unusedPropertyInfo(type: DataClass?, property: DataProperty): JsonObject = buildJsonObject {
+        put("type", property.valueType.typeName)
+        if (type != null) {
+            documentationProvider.memberDocumentation(type.name.qualifiedName, property.name)
+                ?.let { put("documentation", it) }
+        }
+    }
+
+    private fun unusedNestedObject(type: DataClass, function: SchemaMemberFunction): JsonObject = buildJsonObject {
+        put("name", function.simpleName)
+        put("type", (function.semantics as ConfigureSemantics).configuredType.typeName)
+        put(
+            "isBlock",
+            (function.semantics as ConfigureSemantics).configureBlockRequirement.requires
+        )
+        if (function.parameters.isNotEmpty()) {
+            putJsonArray("parameters") {
+                function.parameters.forEach { param ->
+                    addJsonObject {
+                        put("name", param.name)
+                        put("type", param.type.typeName)
+                    }
+                }
+            }
+        }
+        documentationProvider.memberDocumentation(type.name.qualifiedName, function.simpleName)
+            ?.let { put("documentation", it) }
+    }
+
+    private fun errorNode(
         fullDom: DocumentOverlayResult,
         node: ErrorNode
-    ) {
-        addJsonObject {
-            val errorResolution = fullDom.overlayResolutionContainer.data(node)
-            put("source", node.sourceData.text())
-            sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
-            putJsonArray("causes") {
-                userFriendlyErrorMessages(node, errorResolution).forEach(::add)
-            }
+    ) = buildJsonObject {
+        val errorResolution = fullDom.overlayResolutionContainer.data(node)
+        put("source", node.sourceData.text())
+        sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
+        putJsonArray("causes") {
+            userFriendlyErrorMessages(node, errorResolution).forEach(::add)
         }
     }
 
@@ -297,8 +324,7 @@ class DomJsonRenderer(
 
 
     private val SourceData.locationString: String
-        get() =
-            "${this.sourceIdentifier.fileIdentifier}:${this.lineRange.first}"
+        get() = "${this.sourceIdentifier.fileIdentifier}:${this.lineRange.first}"
 }
 
 internal fun JsonObjectBuilder.elementMetadata(function: SchemaMemberFunction?) =
@@ -348,3 +374,6 @@ internal val DataTypeRef.typeName: String
             is DataType.UnitType -> "Unit"
         }
     }
+
+internal fun isFeatureUsageFunction(function: SchemaMemberFunction): Boolean =
+    function.metadata.any { it is ProjectFeatureOrigin }

@@ -5,12 +5,14 @@ import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.serialization.json.*
 import org.gradle.client.build.model.ResolvedDomPrerequisites
 import org.gradle.declarative.dsl.schema.*
+import org.gradle.declarative.dsl.schema.DataType.ClassDataType
 import org.gradle.declarative.dsl.schema.DataType.ParameterizedTypeInstance.TypeArgument.ConcreteTypeArgument
 import org.gradle.declarative.dsl.schema.FunctionSemantics.ConfigureSemantics
 import org.gradle.internal.declarativedsl.analysis.SchemaTypeRefContext
+import org.gradle.internal.declarativedsl.analysis.isReadOnly
 import org.gradle.internal.declarativedsl.evaluator.main.SimpleAnalysisEvaluator
 
-class SchemaCommand : DclCommand("project-schema") {
+class ProjectSchemaCommand : DclCommand("project-schema") {
     override fun help(context: Context): String =
         "Prints the schema for the project types and features available in the build. " +
             "If project features are specified, only their schema will be returned. " +
@@ -41,7 +43,7 @@ class SchemaCommand : DclCommand("project-schema") {
 
         val projectFeaturePredicate: ((ProjectFeatureOrigin) -> Boolean)? = when {
             projectFeatures != null -> {
-                val featureNames = commaSeparatedFeatureNames(projectFeatures);
+                val featureNames = splitCommaSeparatedFeatureNames(projectFeatures);
                 { origin -> featureNames?.contains(origin.featureName) ?: true }
             }
 
@@ -53,14 +55,8 @@ class SchemaCommand : DclCommand("project-schema") {
                 val dom = getDomForProject(analyzer, prerequisites, projectInfo)
                     ?: return buildJsonObject { put("error", "Failed to analyze project at path: $subprojectPath") }
 
-                val features = collectProjectTypeAndFeatures(dom).run { projectFeatures + listOfNotNull(projectType) };
-                { origin ->
-                    features.any {
-                        it.featureName == origin.featureName &&
-                            it.targetDefinitionClassName == origin.targetDefinitionClassName &&
-                            it.targetBuildModelClassName == origin.targetBuildModelClassName
-                    }
-                }
+                val used = collectProjectTypeAndFeatures(dom).run { projectFeatures + listOfNotNull(projectType) };
+                { feature -> used.any(feature::matchesFeature) }
             }
 
             else -> null
@@ -94,7 +90,7 @@ class SchemaCommand : DclCommand("project-schema") {
         }
     }
 
-    private fun typeInfo(type: DataType): JsonObject = buildJsonObject {
+    private fun typeInfo(type: ClassDataType): JsonObject = buildJsonObject {
         if (type is EnumClass) {
             put("name", type.name.qualifiedName)
             putJsonArray("enumEntries") {
@@ -132,11 +128,18 @@ class SchemaCommand : DclCommand("project-schema") {
                 })
             }
         }
+
+        documentationProvider.classDocumentation(type.name.qualifiedName)?.let { docs ->
+            put("documentation", docs)
+        }
     }
 
     private fun propertyInfo(property: DataProperty): JsonObject = buildJsonObject {
         put("name", property.name)
         put("type", property.valueType.typeName)
+        if (property.isReadOnly) {
+            put("isReadOnly", true)
+        }
     }
 
 
@@ -158,8 +161,12 @@ class SchemaCommand : DclCommand("project-schema") {
         val semantics = function.semantics as ConfigureSemantics
         put("type", (function.semantics as ConfigureSemantics).configuredType.typeName)
         when (semantics) {
-            is FunctionSemantics.AccessAndConfigure ->
-                put("semantics", "configures-nested-object-or-feature")
+            is FunctionSemantics.AccessAndConfigure -> {
+                put(
+                    "semantics",
+                    if (isFeatureUsageFunction(function)) "feature-application" else "pre-existing-nested-object"
+                )
+            }
 
             is FunctionSemantics.AddAndConfigure ->
                 put("semantics", "adds-new-object")
@@ -169,7 +176,7 @@ class SchemaCommand : DclCommand("project-schema") {
     private fun collectTypesToInclude(
         schema: AnalysisSchema,
         initial: Iterable<DataClass>
-    ): Set<DataType> = with(SchemaTypeRefContext(schema)) {
+    ): Set<ClassDataType> = with(SchemaTypeRefContext(schema)) {
 
         buildSet {
             fun visitType(type: DataClass) {
@@ -219,5 +226,10 @@ class SchemaCommand : DclCommand("project-schema") {
             }
         }
     }
-
 }
+
+private fun ProjectFeatureOrigin.matchesFeature(
+    feature: ProjectFeatureOrigin
+): Boolean = featureName == feature.featureName &&
+    targetDefinitionClassName == feature.targetDefinitionClassName &&
+    targetBuildModelClassName == feature.targetBuildModelClassName

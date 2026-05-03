@@ -37,7 +37,7 @@ class SettingsDefaultsCommand : DclCommand("settings-defaults") {
     ): JsonElement {
         val settingsScript = prerequisites.settingsFile.takeIf { it.canRead() }?.readText() ?: ""
 
-        val projectTypeNames = commaSeparatedFeatureNames(projectTypes)
+        val projectTypeNames = splitCommaSeparatedFeatureNames(projectTypes)
 
         val settingsResult =
             analyzer.evaluate(prerequisites.settingsFile.path, settingsScript)
@@ -47,7 +47,7 @@ class SettingsDefaultsCommand : DclCommand("settings-defaults") {
         return buildJsonObject {
             put("settingsFile", prerequisites.settingsFile.path)
             put("content", buildJsonArray {
-                with(DomJsonRenderer(withUnusedMembers, dom)) {
+                with(DomJsonRenderer(withUnusedMembers, dom, documentationProvider)) {
                     val defaultsBlocks =
                         dom.document.content.filterIsInstance<ElementNode>()
                             .filter {
@@ -58,7 +58,7 @@ class SettingsDefaultsCommand : DclCommand("settings-defaults") {
                     defaultsBlocks.forEach { defaultsBlock ->
                         defaultsBlock.content.forEach { node ->
                             if (node is ElementNode && (projectTypeNames == null || node.name in projectTypeNames)) {
-                                visitNode(node)
+                                visitNode(null, node)
                             }
                         }
                     }
@@ -68,7 +68,7 @@ class SettingsDefaultsCommand : DclCommand("settings-defaults") {
     }
 }
 
-internal fun commaSeparatedFeatureNames(projectTypes: String?): Set<String>? = projectTypes
+internal fun splitCommaSeparatedFeatureNames(projectTypes: String?): Set<String>? = projectTypes
     ?.split(",")
     ?.map { it.trim() }
     ?.filter { it.isNotBlank() }

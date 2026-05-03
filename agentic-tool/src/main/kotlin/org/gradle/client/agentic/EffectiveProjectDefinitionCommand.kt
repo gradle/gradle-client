@@ -43,8 +43,8 @@ class EffectiveProjectDefinitionCommand : DclCommand("effective-project-definiti
             put("settingsFile", prerequisites.settingsFile.path)
             put("buildFile", projectInfo.projectBuildFile.path)
             put("content", buildJsonArray {
-                with(DomJsonRenderer(withUnusedMembers, fullDom)) {
-                    fullDom.document.content.forEach { visitNode(it) }
+                with(DomJsonRenderer(withUnusedMembers, fullDom, documentationProvider)) {
+                    fullDom.document.content.forEach { visitNode(null, it) }
                 }
             })
         }

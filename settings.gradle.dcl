@@ -46,6 +46,9 @@ defaults {
     kotlinJvmApplication {
         javaVersion = 8
     }
+    kotlinJvmLibrary {
+        javaVersion = 8
+    }
     javaLibrary {
         javaVersion = 8
     }

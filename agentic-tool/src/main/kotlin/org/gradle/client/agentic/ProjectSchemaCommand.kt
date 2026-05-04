@@ -170,7 +170,12 @@ class ProjectSchemaCommand : DclCommand("project-schema") {
             is FunctionSemantics.AccessAndConfigure -> {
                 put(
                     "semantics",
-                    if (isFeatureUsageFunction(function)) "feature-application" else "pre-existing-nested-object"
+                    when {
+                        isFeatureUsageFunction(function) -> "feature-application"
+                        function.parameters.any { it.semantics is ParameterSemantics.IdentityKey } ->
+                            "creates-or-configures-object-by-id"
+                        else -> "pre-existing-nested-object"
+                    }
                 )
             }
 

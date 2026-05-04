@@ -179,8 +179,10 @@ class ProjectSchemaCommand : DclCommand("project-schema") {
                 )
             }
 
-            is FunctionSemantics.AddAndConfigure ->
+            is FunctionSemantics.AddAndConfigure -> {
                 put("semantics", "adds-new-object")
+                put("requiresConfiguringBlock", semantics.configureBlockRequirement.requires)
+            }
         }
     }
 

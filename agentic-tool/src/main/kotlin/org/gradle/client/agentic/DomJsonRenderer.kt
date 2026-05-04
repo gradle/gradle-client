@@ -151,6 +151,11 @@ class DomJsonRenderer(
 
         if (type != null) {
             put("type", type.ref.typeName)
+            if (type is DataClass && type.supertypes.any { it.qualifiedName != Any::class.qualifiedName }) {
+                putJsonArray("supertypes") {
+                    type.supertypes.forEach { add(it.qualifiedName) }
+                }
+            }
             if (type is DataType.ClassDataType) {
                 documentationProvider.classDocumentation(type.name.qualifiedName)
                     ?.let { put("typeDocumentation", it) }

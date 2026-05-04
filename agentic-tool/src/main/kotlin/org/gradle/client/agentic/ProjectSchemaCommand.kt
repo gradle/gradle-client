@@ -99,6 +99,12 @@ class ProjectSchemaCommand : DclCommand("project-schema") {
         }
         if (type is DataClass) {
             put("name", type.name.qualifiedName)
+            val supertypes = type.supertypes.filter { it.qualifiedName != Any::class.qualifiedName }
+            if (supertypes.isNotEmpty()) {
+                putJsonArray("supertypes") {
+                    type.supertypes.forEach { add(it.qualifiedName) }
+                }
+            }
             if (type.properties.isNotEmpty()) {
                 put("properties", buildJsonArray {
                     type.properties.forEach { add(propertyInfo(it)) }

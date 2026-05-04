@@ -4,12 +4,10 @@ import com.github.ajalt.clikt.core.Context
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
-import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import org.gradle.client.build.model.ResolvedDomPrerequisites
-import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils
 import org.gradle.internal.declarativedsl.evaluator.main.SimpleAnalysisEvaluator
 
 class ProjectsCommand : DclCommand("projects") {
@@ -23,7 +21,6 @@ class ProjectsCommand : DclCommand("projects") {
         prerequisites: ResolvedDomPrerequisites,
         analyzer: SimpleAnalysisEvaluator
     ): JsonElement {
-        prerequisites.projectInfos
         return buildJsonObject {
             put("settingsFile", prerequisites.settingsFile.path)
 

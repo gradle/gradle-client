@@ -23,7 +23,8 @@ fun main(args: Array<String>) {
             EffectiveProjectDefinitionCommand(),
             SettingsDefaultsCommand(),
             SettingsDefinitionCommand(),
-            ProjectSchemaCommand()
+            ProjectSchemaCommand(),
+            ProjectTypesAndFeaturesCommand()
         )
         .main(args)
 }

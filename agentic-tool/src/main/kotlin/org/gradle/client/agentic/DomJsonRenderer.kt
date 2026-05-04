@@ -199,9 +199,11 @@ class DomJsonRenderer(
                 val effective = origin.effectivePropertiesFromUnderlay +
                     origin.effectivePropertiesFromOverlay
 
-                if (effective.isNotEmpty()) {
+                if (effective.size > 1) {
                     putJsonArray("multipartEffectiveValue") {
-                        effective.forEach { putValueInline(it.value, dom) }
+                        addJsonObject {
+                            effective.forEach { putValue(it.value, dom) }
+                        }
                     }
                 }
 
@@ -210,7 +212,9 @@ class DomJsonRenderer(
 
                 if (shadowed.isNotEmpty()) {
                     putJsonArray("overridesValues") {
-                        shadowed.forEach { putValueInline(it.value, dom) }
+                        addJsonObject {
+                            shadowed.forEach { putValue(it.value, dom) }
+                        }
                     }
                 }
             }
@@ -279,9 +283,13 @@ class DomJsonRenderer(
         fullDom: DocumentOverlayResult
     ) {
         when (node) {
-            is DeclarativeDocument.ValueNode.LiteralValueNode -> put("value", node.sourceData.text())
+            is DeclarativeDocument.ValueNode.LiteralValueNode -> {
+                put("value", node.sourceData.text())
+                sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
+            }
             is DeclarativeDocument.ValueNode.NamedReferenceNode -> {
                 put("value", node.referenceName)
+                sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
             }
 
             is DeclarativeDocument.ValueNode.ValueFactoryNode -> putJsonObject("value") {
@@ -302,7 +310,7 @@ class DomJsonRenderer(
 
     private fun JsonObjectBuilder.sourceLocation(
         overlayOrigin: OverlayNodeOrigin,
-        node: DeclarativeDocument.DocumentNode
+        node: DeclarativeDocument.Node
     ) {
         when (overlayOrigin) {
             is OverlayNodeOrigin.CopiedOrigin -> {

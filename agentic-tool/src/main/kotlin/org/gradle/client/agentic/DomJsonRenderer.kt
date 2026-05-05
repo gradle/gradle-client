@@ -1,43 +1,21 @@
 package org.gradle.client.agentic
 
-import kotlinx.serialization.json.JsonArrayBuilder
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonObjectBuilder
-import kotlinx.serialization.json.add
-import kotlinx.serialization.json.addJsonObject
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
-import kotlinx.serialization.json.putJsonObject
+import kotlinx.serialization.json.*
 import org.gradle.client.core.gradle.dcl.userFriendlyErrorMessages
-import org.gradle.declarative.dsl.schema.ConfigureFromGetterOrigin
-import org.gradle.declarative.dsl.schema.ContainerElementFactory
-import org.gradle.declarative.dsl.schema.DataClass
-import org.gradle.declarative.dsl.schema.DataProperty
-import org.gradle.declarative.dsl.schema.DataType
+import org.gradle.declarative.dsl.schema.*
 import org.gradle.declarative.dsl.schema.DataType.ParameterizedTypeInstance.TypeArgument.ConcreteTypeArgument
 import org.gradle.declarative.dsl.schema.DataType.ParameterizedTypeInstance.TypeArgument.StarProjection
-import org.gradle.declarative.dsl.schema.DataTypeRef
 import org.gradle.declarative.dsl.schema.FunctionSemantics.ConfigureSemantics
-import org.gradle.declarative.dsl.schema.ProjectFeatureOrigin
-import org.gradle.declarative.dsl.schema.SchemaItemMetadata
-import org.gradle.declarative.dsl.schema.SchemaMemberFunction
-import org.gradle.declarative.dsl.schema.UnsafeSchemaItem
 import org.gradle.internal.declarativedsl.analysis.isReadOnly
 import org.gradle.internal.declarativedsl.analysis.ref
 import org.gradle.internal.declarativedsl.dom.DeclarativeDocument
-import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ElementNode
-import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.ErrorNode
-import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.PropertyNode
+import org.gradle.internal.declarativedsl.dom.DeclarativeDocument.DocumentNode.*
 import org.gradle.internal.declarativedsl.dom.DocumentResolution
 import org.gradle.internal.declarativedsl.dom.DocumentResolution.ElementResolution.SuccessfulElementResolution
 import org.gradle.internal.declarativedsl.dom.DocumentResolution.ValueNodeResolution.ValueFactoryResolution.ValueFactoryResolved
 import org.gradle.internal.declarativedsl.dom.operations.overlay.DocumentOverlayResult
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrigin
 import org.gradle.internal.declarativedsl.language.SourceData
-import kotlin.collections.forEach
-import kotlin.collections.orEmpty
 
 @Suppress("TooManyFunctions")
 class DomJsonRenderer(
@@ -127,7 +105,7 @@ class DomJsonRenderer(
     ): DataType? {
         put("name", node.name)
         putJsonArray("args") {
-            node.elementValues.forEach { putValueInline(it, dom) }
+            node.elementValues.forEach { putValueInObject(it, dom) }
         }
 
         val overlayOrigin = dom.overlayNodeOriginContainer.data(node)
@@ -151,9 +129,11 @@ class DomJsonRenderer(
 
         if (type != null) {
             put("type", type.ref.typeName)
-            if (type is DataClass && type.supertypes.any { it.qualifiedName != Any::class.qualifiedName }) {
+            val supertypeNames = (type as? DataClass)?.supertypes
+                ?.filter { it.qualifiedName != Any::class.qualifiedName }.orEmpty()
+            if (supertypeNames.isNotEmpty()) {
                 putJsonArray("supertypes") {
-                    type.supertypes.forEach { add(it.qualifiedName) }
+                    supertypeNames.forEach { add(it.qualifiedName) }
                 }
             }
             if (type is DataType.ClassDataType) {
@@ -193,8 +173,7 @@ class DomJsonRenderer(
 
             val origin = dom.overlayNodeOriginContainer.data(property)
 
-            sourceLocation(origin, property)
-            putValue(property.value, dom)
+            putValueInline(property.value, dom)
             if (origin is OverlayNodeOrigin.MergedProperties) {
                 val effective = origin.effectivePropertiesFromUnderlay +
                     origin.effectivePropertiesFromOverlay
@@ -202,7 +181,7 @@ class DomJsonRenderer(
                 if (effective.size > 1) {
                     putJsonArray("multipartEffectiveValue") {
                         addJsonObject {
-                            effective.forEach { putValue(it.value, dom) }
+                            effective.forEach { putValueInline(it.value, dom) }
                         }
                     }
                 }
@@ -213,7 +192,7 @@ class DomJsonRenderer(
                 if (shadowed.isNotEmpty()) {
                     putJsonArray("overridesValues") {
                         addJsonObject {
-                            shadowed.forEach { putValue(it.value, dom) }
+                            shadowed.forEach { putValueInline(it.value, dom, it.sourceData) }
                         }
                     }
                 }
@@ -267,33 +246,27 @@ class DomJsonRenderer(
         }
     }
 
-    private fun JsonArrayBuilder.putValueInline(
+    private fun JsonArrayBuilder.putValueInObject(
         node: DeclarativeDocument.ValueNode,
         fullDom: DocumentOverlayResult
-    ) {
-        when (node) {
-            is DeclarativeDocument.ValueNode.LiteralValueNode -> add(node.sourceData.text())
-            is DeclarativeDocument.ValueNode.NamedReferenceNode -> add(node.referenceName)
-            is DeclarativeDocument.ValueNode.ValueFactoryNode -> addJsonObject { putValue(node, fullDom) }
-        }
-    }
+    ) = addJsonObject { putValueInline(node, fullDom) }
 
-    private fun JsonObjectBuilder.putValue(
+    private fun JsonObjectBuilder.putValueInline(
         node: DeclarativeDocument.ValueNode,
-        fullDom: DocumentOverlayResult
+        fullDom: DocumentOverlayResult,
+        sourceLocation: SourceData? = null
     ) {
         when (node) {
             is DeclarativeDocument.ValueNode.LiteralValueNode -> {
                 put("value", node.sourceData.text())
-                sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
             }
             is DeclarativeDocument.ValueNode.NamedReferenceNode -> {
                 put("value", node.referenceName)
                 sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
             }
 
-            is DeclarativeDocument.ValueNode.ValueFactoryNode -> putJsonObject("value") {
-                put("source", node.sourceData.text())
+            is DeclarativeDocument.ValueNode.ValueFactoryNode -> {
+                sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
                 val resolved = fullDom.overlayResolutionContainer.data(node)
                 if (resolved is ValueFactoryResolved) {
                     put("type", resolved.function.semantics.returnValueType.typeName)
@@ -301,10 +274,16 @@ class DomJsonRenderer(
                 put("valueFactory", node.factoryName + (if (node.isInfix) "(infix-notation)" else ""))
                 putJsonArray("args") {
                     node.values.forEach {
-                        putValueInline(it, fullDom)
+                        putValueInObject(it, fullDom)
                     }
                 }
+                put("source", node.sourceData.text())
             }
+        }
+        if (sourceLocation != null) {
+            put("sourceLocation", sourceLocation.locationString)
+        } else {
+            sourceLocation(fullDom.overlayNodeOriginContainer.data(node), node)
         }
     }
 

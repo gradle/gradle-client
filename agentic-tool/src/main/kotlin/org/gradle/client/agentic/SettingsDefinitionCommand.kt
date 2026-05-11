@@ -37,7 +37,7 @@ class SettingsDefinitionCommand : DclCommand("settings-definition") {
             put("settingsFile", prerequisites.settingsFile.path)
             put("content", buildJsonArray {
                 with(DomJsonRenderer(withUnusedMembers, dom, documentationProvider)) {
-                    dom.document.content.forEach { visitNode(null, it) }
+                    dom.document.content.forEach { visitNode(it) }
                 }
             })
         }

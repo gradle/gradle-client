@@ -135,7 +135,7 @@ class ProjectSchemaCommand : DclCommand("project-schema") {
             }
         }
 
-        documentationProvider.classDocumentation(type.name.qualifiedName)?.let { docs ->
+        documentationProvider.classDocumentation(type)?.let { docs ->
             put("documentation", docs)
         }
     }
@@ -145,6 +145,9 @@ class ProjectSchemaCommand : DclCommand("project-schema") {
         put("type", property.valueType.typeName)
         if (property.isReadOnly) {
             put("isReadOnly", true)
+        }
+        documentationProvider.propertyDocumentation(property)?.let { docs ->
+            put("documentation", docs)
         }
     }
 
@@ -183,6 +186,9 @@ class ProjectSchemaCommand : DclCommand("project-schema") {
                 put("semantics", "adds-new-object")
                 put("requiresConfiguringBlock", semantics.configureBlockRequirement.requires)
             }
+        }
+        documentationProvider.functionDocumentation(function)?.let { docs ->
+            put("documentation", docs)
         }
     }
 
@@ -237,6 +243,9 @@ class ProjectSchemaCommand : DclCommand("project-schema") {
                     put("type", parameter.type.typeName)
                 }
             }
+        }
+        documentationProvider.functionDocumentation(function)?.let { docs ->
+            put("documentation", docs)
         }
     }
 }

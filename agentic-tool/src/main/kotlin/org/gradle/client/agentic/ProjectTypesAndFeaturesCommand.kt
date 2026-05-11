@@ -21,22 +21,18 @@ class ProjectTypesAndFeaturesCommand : DclCommand("project-types-and-features") 
         return buildJsonObject {
             val schema = prerequisites.projectInterpretationSequence.steps.last().evaluationSchemaForStep.analysisSchema
 
-            val projectTypes = schema.topLevelReceiverType.memberFunctions.flatMap {
-                it.metadata.filterIsInstance<ProjectFeatureOrigin>()
+            val projectTypes = schema.topLevelReceiverType.memberFunctions.flatMap { fn ->
+                fn.metadata.filterIsInstance<ProjectFeatureOrigin>().map { fn to it }
             }
 
             putJsonArray("projectTypes") {
-                projectTypes.forEach { projectType ->
+                projectTypes.forEach { (function, projectType) ->
                     addJsonObject {
                         put("name", projectType.featureName)
                         put("ecosystemPluginId", projectType.ecosystemPluginId)
 
-                        val documentation = documentationProvider.featureDocumentation(
-                            projectType.ecosystemPluginId,
-                            projectType.featureName
-                        )
-                        if (documentation != null) {
-                            put("documentation", documentation)
+                        documentationProvider.functionDocumentation(function)?.let {
+                            put("documentation", it)
                         }
                     }
                 }
@@ -44,9 +40,12 @@ class ProjectTypesAndFeaturesCommand : DclCommand("project-types-and-features") 
 
             val features = schema.dataClassTypesByFqName.values.filterIsInstance<DataClass>()
                 .flatMap {
-                    it.metadata.filterIsInstance<ProjectFeatureOrigin>()
-                        .filter { it.targetDefinitionClassName != "org.gradle.api.Project" }
-                }.distinctBy {
+                    it.memberFunctions.flatMap { fn ->
+                        fn.metadata.filterIsInstance<ProjectFeatureOrigin>()
+                            .filter { it.targetDefinitionClassName != "org.gradle.api.Project" }
+                            .map { fn to it }
+                    }
+                }.distinctBy { (_, it) ->
                     listOf(
                         it.featureName,
                         it.ecosystemPluginId,
@@ -56,25 +55,20 @@ class ProjectTypesAndFeaturesCommand : DclCommand("project-types-and-features") 
                 }
 
             putJsonArray("projectFeatures") {
-                features.forEach {
+                features.forEach { (function, feature) ->
                     addJsonObject {
-                        put("name", it.featureName)
-                        put("ecosystemPluginId", it.ecosystemPluginId)
+                        put("name", feature.featureName)
+                        put("ecosystemPluginId", feature.ecosystemPluginId)
 
-                        if (it.targetDefinitionClassName != null) {
-                            put("targetDefinitionTypeName", it.targetDefinitionClassName)
+                        if (feature.targetDefinitionClassName != null) {
+                            put("targetDefinitionTypeName", feature.targetDefinitionClassName)
                         }
-                        if (it.targetBuildModelClassName != null) {
-                            put("targetBuildModelTypeName", it.targetBuildModelClassName)
+                        if (feature.targetBuildModelClassName != null) {
+                            put("targetBuildModelTypeName", feature.targetBuildModelClassName)
                         }
 
-                        val documentation = documentationProvider.featureDocumentation(
-                            it.ecosystemPluginId,
-                            it.featureName
-                        )
-                        if (documentation != null) {
-                            put("documentation", documentation)
-                        }
+                        documentationProvider.functionDocumentation(function)
+                            ?.let { put("documentation", it) }
                     }
                 }
             }

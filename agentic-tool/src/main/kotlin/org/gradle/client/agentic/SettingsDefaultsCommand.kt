@@ -58,7 +58,7 @@ class SettingsDefaultsCommand : DclCommand("settings-defaults") {
                     defaultsBlocks.forEach { defaultsBlock ->
                         defaultsBlock.content.forEach { node ->
                             if (node is ElementNode && (projectTypeNames == null || node.name in projectTypeNames)) {
-                                visitNode(null, node)
+                                visitNode(node)
                             }
                         }
                     }

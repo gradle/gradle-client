@@ -37,7 +37,7 @@ class MainCommand : NoOpCliktCommand() {
 
 abstract class DclCommand(name: String) : CliktCommand(name) {
     protected val rootProjectDir: String by option(help = "Gradle build root project directory").default(".")
-    protected val documentationProvider: DocumentationProvider = NoopDocumentationProvider
+    protected val documentationProvider: DocumentationProvider = SchemaEmbeddedDocumentationProvider
 
     private val domPrerequisites: BuildAction<ResolvedDomPrerequisites> = GetResolvedDomAction()
 

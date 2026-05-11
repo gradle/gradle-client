@@ -24,7 +24,7 @@ class DomJsonRenderer(
     val documentationProvider: DocumentationProvider,
 ) {
     @Suppress("ComplexMethod")
-    fun JsonArrayBuilder.visitNode(inClass: DataClass?, node: DeclarativeDocument.DocumentNode) {
+    fun JsonArrayBuilder.visitNode(node: DeclarativeDocument.DocumentNode) {
         when (node) {
             is ElementNode -> addJsonObject {
                 val type = putElementHeaderAndGetType(node) as? DataClass
@@ -36,7 +36,7 @@ class DomJsonRenderer(
 
                 if (properties.isNotEmpty()) {
                     put("properties", buildJsonObject {
-                        properties.forEach { put(it.name, propertyInfo(type, it)) }
+                        properties.forEach { put(it.name, propertyInfo(it)) }
                     })
                 }
                 if (withUnusedMembers && unusedProperties.isNotEmpty()) {
@@ -49,10 +49,10 @@ class DomJsonRenderer(
                     node.content.filterIsInstance<ElementNode>().partition { isFeatureUsageElement(it) }
 
                 if (features.isNotEmpty()) {
-                    put("features", buildJsonArray { features.forEach { visitNode(type, it) } })
+                    put("features", buildJsonArray { features.forEach { visitNode(it) } })
                 }
                 if (nestedObjects.isNotEmpty()) {
-                    putJsonArray("nestedObjects") { nestedObjects.forEach { visitNode(type, it) } }
+                    putJsonArray("nestedObjects") { nestedObjects.forEach { visitNode(it) } }
                 }
 
                 val usedFunctions = node.content.asSequence()
@@ -69,12 +69,12 @@ class DomJsonRenderer(
 
                 if (withUnusedMembers && unusedFeatures.isNotEmpty()) {
                     putJsonArray("unusedFeatures") {
-                        unusedFeatures.forEach { add(unusedNestedObject(type!!, it)) }
+                        unusedFeatures.forEach { add(unusedNestedObject(it)) }
                     }
                 }
                 if (withUnusedMembers && unusedNestedObjects.isNotEmpty()) {
                     putJsonArray("unusedNestedObjects") {
-                        unusedNestedObjects.forEach { add(unusedNestedObject(type!!, it)) }
+                        unusedNestedObjects.forEach { add(unusedNestedObject(it)) }
                     }
                 }
 
@@ -85,13 +85,14 @@ class DomJsonRenderer(
                     }
                 }
 
-                if (inClass != null) {
-                    documentationProvider.memberDocumentation(inClass.name.qualifiedName, node.name)
+                val resolved = dom.overlayResolutionContainer.data(node)
+                if (resolved is SuccessfulElementResolution) {
+                    documentationProvider.functionDocumentation(resolved.elementFactoryFunction)
                         ?.let { put("documentation", it) }
                 }
             }
 
-            is PropertyNode -> add(propertyInfo(inClass, node))
+            is PropertyNode -> add(propertyInfo(node))
             is ErrorNode -> add(errorNode(dom, node))
         }
     }
@@ -137,7 +138,7 @@ class DomJsonRenderer(
                 }
             }
             if (type is DataType.ClassDataType) {
-                documentationProvider.classDocumentation(type.name.qualifiedName)
+                documentationProvider.classDocumentation(type)
                     ?.let { put("typeDocumentation", it) }
             }
         }
@@ -149,7 +150,7 @@ class DomJsonRenderer(
         return type
     }
 
-    fun propertyInfo(inType: DataClass?, property: PropertyNode): JsonObject {
+    fun propertyInfo(property: PropertyNode): JsonObject {
         val resolved = dom.overlayResolutionContainer.data(property)
         return buildJsonObject {
             if (property.augmentation == PropertyNode.PropertyAugmentation.Plus) {
@@ -198,8 +199,8 @@ class DomJsonRenderer(
                 }
             }
 
-            if (inType != null) {
-                documentationProvider.memberDocumentation(inType.name.qualifiedName, property.name)
+            if (resolved is DocumentResolution.PropertyResolution.PropertyAssignmentResolved) {
+                documentationProvider.propertyDocumentation(resolved.property)
                     ?.let { put("documentation", it) }
             }
         }
@@ -208,12 +209,12 @@ class DomJsonRenderer(
     private fun unusedPropertyInfo(type: DataClass?, property: DataProperty): JsonObject = buildJsonObject {
         put("type", property.valueType.typeName)
         if (type != null) {
-            documentationProvider.memberDocumentation(type.name.qualifiedName, property.name)
+            documentationProvider.propertyDocumentation(property)
                 ?.let { put("documentation", it) }
         }
     }
 
-    private fun unusedNestedObject(type: DataClass, function: SchemaMemberFunction): JsonObject = buildJsonObject {
+    private fun unusedNestedObject(function: SchemaMemberFunction): JsonObject = buildJsonObject {
         put("name", function.simpleName)
         put("type", (function.semantics as ConfigureSemantics).configuredType.typeName)
         put(
@@ -230,7 +231,7 @@ class DomJsonRenderer(
                 }
             }
         }
-        documentationProvider.memberDocumentation(type.name.qualifiedName, function.simpleName)
+        documentationProvider.functionDocumentation(function)
             ?.let { put("documentation", it) }
     }
 
@@ -337,6 +338,7 @@ internal fun JsonObjectBuilder.elementMetadata(metadata: Iterable<SchemaItemMeta
             is ConfigureFromGetterOrigin -> Unit
             is ContainerElementFactory -> Unit
             is UnsafeSchemaItem -> Unit
+            is SchemaDocumentation -> Unit
         }
     }
 }

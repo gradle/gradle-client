@@ -1,5 +1,6 @@
 kotlinJvmApplication {
     mainClass = "org.gradle.client.agentic.AgenticToolKt"
+    jvmArguments += listOf("--enable-native-access=ALL-UNNAMED")
 
     dependencies {
         implementation(project(":build-action"))
@@ -12,5 +13,7 @@ kotlinJvmApplication {
 
         implementation("com.github.ajalt.clikt:clikt:5.0.1")
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
+        runtimeOnly("org.slf4j:slf4j-simple:2.0.17")
     }
 }

@@ -1,0 +1,10 @@
+{
+    "types": {
+        "org.gradle.client.projectfeatures.compose.Compose": {
+            "documentation": "The top-level Compose definition.",
+            "properties": {
+                "mainClass": "Main class to execute in the packaged Compose app."
+            }
+        }
+    }
+}

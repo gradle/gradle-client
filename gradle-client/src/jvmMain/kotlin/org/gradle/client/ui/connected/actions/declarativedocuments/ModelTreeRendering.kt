@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.times
-import org.gradle.client.core.gradle.dcl.isUnresolvedBase
+import isUnresolvedBase
 import org.gradle.client.core.gradle.dcl.type
 import org.gradle.client.ui.composables.LabelMedium
 import org.gradle.client.ui.composables.TitleSmall

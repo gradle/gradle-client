@@ -88,6 +88,14 @@
 
 # Kotlin embedded compiler
 -keep class org.jetbrains.kotlin.** { *; }
+-keep class org.jetbrains.org.objectweb.asm.** { *; }
+
+# Guava uses signature-polymorphic MethodHandle.invokeExact and VarHandle.{get,set,setRelease,compareAndSet,getAndSet},
+# which ProGuard cannot resolve against java.base. The call sites are valid at runtime.
+-dontwarn com.google.common.hash.ChecksumHashFunction$ChecksumMethodHandles
+-dontwarn com.google.common.hash.Hashing$Crc32cMethodHandles
+-dontwarn com.google.common.hash.LittleEndianByteArray$VarHandleLittleEndianBytes$1
+-dontwarn com.google.common.util.concurrent.AbstractFutureState$VarHandleAtomicHelper
 
 # JNA classes
 -keep class com.sun.jna.** { *; }

@@ -20,7 +20,7 @@ jobs:
           java-version: 21
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: gradle/actions/setup-gradle@v6.2.0
+      - uses: gradle/actions/setup-gradle@v6.3.0
         with:
           add-job-summary: on-failure
           add-job-summary-as-pr-comment: on-failure
@@ -54,7 +54,7 @@ jobs:
           java-version: 21
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: gradle/actions/setup-gradle@v6.2.0
+      - uses: gradle/actions/setup-gradle@v6.3.0
         with:
           add-job-summary: on-failure
           add-job-summary-as-pr-comment: on-failure

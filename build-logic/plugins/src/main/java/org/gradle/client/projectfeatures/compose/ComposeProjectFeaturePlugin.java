@@ -4,9 +4,9 @@ import kotlin.Unit;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.features.annotations.BindsProjectFeature;
-import org.gradle.features.binding.ProjectFeatureBindingBuilder;
-import org.gradle.features.binding.ProjectFeatureBinding;
+import org.gradle.features.binding.*;
 import org.gradle.api.plugins.PluginManager;
 import org.gradle.api.provider.ProviderFactory;
 import org.jetbrains.compose.ComposeExtension;
@@ -28,46 +28,66 @@ abstract public class ComposeProjectFeaturePlugin implements Plugin<Project> {
     }
 
     static class Binding implements ProjectFeatureBinding {
+
         @Override
         public void bind(ProjectFeatureBindingBuilder builder) {
-            builder.bindProjectFeatureToBuildModel("compose", Compose.class, KotlinMultiplatformBuildModel.class,
-                    (context, definition, buildModel, parent) -> {
-                        Services services = context.getObjectFactory().newInstance(Services.class);
-                        services.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
-                        services.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
-
-                        buildModel.getPackageVersion().set(
-                            definition.getNativeDistributions().getPackageVersion()
-                                .orElse(services.getProviders().provider(() -> services.getProject().getVersion().toString()))
-                        );
-
-                        // Many of the underlying extension elements are not provider-aware, so we have to do
-                        // this in an afterEvaluate block
-                        services.getProject().afterEvaluate(p -> {
-                            services.getPluginManager().apply("org.jetbrains.compose");
-                            ((DefaultComposeBuildModel)buildModel).setComposeExtension(services.getProject().getExtensions().getByType(ComposeExtension.class));
-                            DesktopExtension desktop =  buildModel.getComposeExtension().getExtensions().getByType(DesktopExtension.class);
-                            KotlinMultiplatformExtension kmpExtension = context.getBuildModel(parent).getKotlinMultiplatformExtension();
-                            JvmApplication application = desktop.getApplication();
-                            JvmApplicationDistributions nativeDistributions = application.getNativeDistributions();
-
-                            wireNativeDistribution(definition.getNativeDistributions(), nativeDistributions, buildModel.getPackageVersion().get());
-                            application.setMainClass(definition.getMainClass().get());
-                            definition.getJvmArgs().forEach(jvmArg -> application.getJvmArgs().add(jvmArg.getName() + jvmArg.getValue().get()));
-
-                            wireBuildTypes(definition, application.getBuildTypes());
-
-                            // Need to set the main class for the JVM run task in the KMP model from the one nested in the Compose model
-                            kmpExtension.jvm("jvm" , jvm -> {
-                                jvm.mainRun(kotlinJvmRunDsl -> {
-                                    kotlinJvmRunDsl.getMainClass().set(definition.getMainClass());
-                                    return Unit.INSTANCE;
-                                });
-                            });
-                        });
-                    })
+            builder.bindProjectFeatureToBuildModel(
+                    "compose", Compose.class, KotlinMultiplatformBuildModel.class, ApplyAction.class
+                )
                 .withUnsafeApplyAction()
                 .withBuildModelImplementationType(DefaultComposeBuildModel.class);
+        }
+
+        public static abstract class ApplyAction implements ProjectFeatureApplyAction<
+            Compose,
+            ComposeBuildModel,
+            Definition<KotlinMultiplatformBuildModel>
+            > {
+
+            @Inject
+            public ApplyAction() {
+            }
+
+            @Inject
+            public abstract ObjectFactory getObjectFactory();
+
+            @Override
+            public void apply(ProjectFeatureApplicationContext context, Compose definition, ComposeBuildModel buildModel, Definition<KotlinMultiplatformBuildModel> parent) {
+                Binding.Services services = getObjectFactory().newInstance(Binding.Services.class);
+                services.getPluginManager().apply("org.jetbrains.kotlin.plugin.serialization");
+                services.getPluginManager().apply("org.jetbrains.kotlin.plugin.compose");
+
+                buildModel.getPackageVersion().set(
+                    definition.getNativeDistributions().getPackageVersion()
+                        .orElse(services.getProviders().provider(() -> services.getProject().getVersion().toString()))
+                );
+
+                // Many of the underlying extension elements are not provider-aware, so we have to do
+                // this in an afterEvaluate block
+                services.getProject().afterEvaluate(p -> {
+                    services.getPluginManager().apply("org.jetbrains.compose");
+                    ((DefaultComposeBuildModel) buildModel).setComposeExtension(services.getProject().getExtensions().getByType(ComposeExtension.class));
+                    DesktopExtension desktop = buildModel.getComposeExtension().getExtensions().getByType(DesktopExtension.class);
+                    KotlinMultiplatformExtension kmpExtension = context.getBuildModel(parent).getKotlinMultiplatformExtension();
+                    JvmApplication application = desktop.getApplication();
+                    JvmApplicationDistributions nativeDistributions = application.getNativeDistributions();
+
+                    wireNativeDistribution(definition.getNativeDistributions(), nativeDistributions, buildModel.getPackageVersion().get());
+                    application.setMainClass(definition.getMainClass().get());
+                    definition.getJvmArgs().forEach(jvmArg -> application.getJvmArgs().add(jvmArg.getName() + jvmArg.getValue().get()));
+
+                    wireBuildTypes(definition, application.getBuildTypes());
+
+                    // Need to set the main class for the JVM run task in the KMP model from the one nested in the Compose model
+                    kmpExtension.jvm("jvm", jvm -> {
+                        jvm.mainRun(kotlinJvmRunDsl -> {
+                            kotlinJvmRunDsl.getMainClass().set(definition.getMainClass());
+                            return Unit.INSTANCE;
+                        });
+                    });
+                });
+            }
+
         }
 
         private static void wireBuildTypes(Compose composeBuildModel, JvmApplicationBuildTypes buildTypes) {

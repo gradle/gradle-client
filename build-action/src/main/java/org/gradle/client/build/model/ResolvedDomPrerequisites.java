@@ -8,16 +8,25 @@ import java.io.Serializable;
 import java.util.List;
 
 public interface ResolvedDomPrerequisites extends Serializable {
-    
+
     InterpretationSequence getSettingsInterpretationSequence();
-    
+
     InterpretationSequence getProjectInterpretationSequence();
 
     AnalysisSchema getAnalysisSchema();
 
     File getRootDir();
-    
+
     File getSettingsFile();
 
     List<File> getDeclarativeFiles();
+
+    List<ProjectInfo> getProjectInfos();
+
+    interface ProjectInfo {
+        String getProjectPath();
+        File getProjectBuildFile();
+        File getProjectDirectory();
+        boolean isDeclarative();
+    }
 }

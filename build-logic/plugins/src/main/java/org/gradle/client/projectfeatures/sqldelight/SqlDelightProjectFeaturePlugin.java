@@ -9,8 +9,7 @@ import org.gradle.api.artifacts.DependencyScopeConfiguration;
 import org.gradle.api.artifacts.dsl.DependencyFactory;
 import org.gradle.api.experimental.kmp.KotlinMultiplatformBuildModel;
 import org.gradle.features.annotations.BindsProjectFeature;
-import org.gradle.features.binding.ProjectFeatureBindingBuilder;
-import org.gradle.features.binding.ProjectFeatureBinding;
+import org.gradle.features.binding.*;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.PluginManager;
 import org.gradle.api.provider.Provider;
@@ -39,47 +38,60 @@ abstract public class SqlDelightProjectFeaturePlugin implements Plugin<Project> 
     }
 
     static class Binding implements ProjectFeatureBinding {
-        @Override
-        public void bind(ProjectFeatureBindingBuilder builder) {
-            builder.bindProjectFeatureToBuildModel("sqlDelight", SqlDelight.class, KotlinMultiplatformBuildModel.class,
-                (context, definition, buildModel, parent) -> {
-                    Services services = context.getObjectFactory().newInstance(Services.class);
 
-                    buildModel.getVersion().set(definition.getVersion().orElse("2.1.0"));
+        public static abstract class ApplyAction implements ProjectFeatureApplyAction<SqlDelight, SqlDelightBuildModel, Definition<KotlinMultiplatformBuildModel>> {
 
-                    KotlinMultiplatformBuildModel parentBuildModel = context.getBuildModel(parent);
-                    parentBuildModel.getKotlinMultiplatformExtension().jvm(jvmTarget -> {
-                        NamedDomainObjectProvider<DependencyScopeConfiguration> sqlDelightConfiguration = services.getProject().getConfigurations().dependencyScope("sqlDelightTool", conf -> {
-                            stream(SQLDELIGHT_DEPENDENCY_MODULES).forEach(module ->
-                                conf.getDependencies().addLater(buildModel.getVersion().map(version -> services.getDependencyFactory().create(SQLDELIGHT_GROUP + ":" + module + ":" + version)))
-                            );
-                        });
+            @Inject
+            public ApplyAction() {
+            }
 
-                        services.getProject().getConfigurations().named(jvmTarget.getCompilations().getByName("main").getDefaultSourceSet().getImplementationConfigurationName(), conf ->
-                                conf.extendsFrom(sqlDelightConfiguration.get())
+            @Inject
+            public abstract ObjectFactory getObjectFactory();
+
+            @Override
+            public void apply(ProjectFeatureApplicationContext context, SqlDelight definition, SqlDelightBuildModel buildModel, Definition<KotlinMultiplatformBuildModel> parent) {
+                Services services = getObjectFactory().newInstance(Services.class);
+
+                buildModel.getVersion().set(definition.getVersion().orElse("2.1.0"));
+
+                KotlinMultiplatformBuildModel parentBuildModel = context.getBuildModel(parent);
+                parentBuildModel.getKotlinMultiplatformExtension().jvm(jvmTarget -> {
+                    NamedDomainObjectProvider<DependencyScopeConfiguration> sqlDelightConfiguration = services.getProject().getConfigurations().dependencyScope("sqlDelightTool", conf -> {
+                        stream(SQLDELIGHT_DEPENDENCY_MODULES).forEach(module ->
+                            conf.getDependencies().addLater(buildModel.getVersion().map(version -> services.getDependencyFactory().create(SQLDELIGHT_GROUP + ":" + module + ":" + version)))
                         );
                     });
 
-                    services.getPluginManager().apply("app.cash.sqldelight");
-                    ((DefaultSqlDelightBuildModel) buildModel).setSqlDelightExtension(services.getProject().getExtensions().getByType(SqlDelightExtension.class));
+                    services.getProject().getConfigurations().named(jvmTarget.getCompilations().getByName("main").getDefaultSourceSet().getImplementationConfigurationName(), conf ->
+                        conf.extendsFrom(sqlDelightConfiguration.get())
+                    );
+                });
 
-                    // https://github.com/gradle/gradle/issues/28043
-                    Provider<Set<Database>> featureDatabasesProvider = services.getProviders().provider(() -> Collections.unmodifiableSet(definition.getDatabases()));
+                services.getPluginManager().apply("app.cash.sqldelight");
+                ((DefaultSqlDelightBuildModel) buildModel).setSqlDelightExtension(services.getProject().getExtensions().getByType(SqlDelightExtension.class));
 
-                    Provider<Set<SqlDelightDatabase>> sqlDelightDatabases = featureDatabasesProvider.map(featureDatabases -> featureDatabases.stream().map(featureDatabase -> {
-                        SqlDelightDatabase database = services.getObjects().newInstance(SqlDelightDatabase.class, featureDatabase.getName());
+                // https://github.com/gradle/gradle/issues/28043
+                Provider<Set<Database>> featureDatabasesProvider = services.getProviders().provider(() -> Collections.unmodifiableSet(definition.getDatabases()));
 
-                        database.getPackageName().set(featureDatabase.getPackageName());
-                        database.getVerifyDefinitions().set(featureDatabase.getVerifyDefinitions());
-                        database.getVerifyMigrations().set(featureDatabase.getVerifyMigrations());
-                        database.getDeriveSchemaFromMigrations().set(featureDatabase.getDeriveSchemaFromMigrations());
-                        database.getGenerateAsync().set(featureDatabase.getGenerateAsync());
+                Provider<Set<SqlDelightDatabase>> sqlDelightDatabases = featureDatabasesProvider.map(featureDatabases -> featureDatabases.stream().map(featureDatabase -> {
+                    SqlDelightDatabase database = services.getObjects().newInstance(SqlDelightDatabase.class, featureDatabase.getName());
 
-                        return database;
-                    }).collect(Collectors.toUnmodifiableSet()));
+                    database.getPackageName().set(featureDatabase.getPackageName());
+                    database.getVerifyDefinitions().set(featureDatabase.getVerifyDefinitions());
+                    database.getVerifyMigrations().set(featureDatabase.getVerifyMigrations());
+                    database.getDeriveSchemaFromMigrations().set(featureDatabase.getDeriveSchemaFromMigrations());
+                    database.getGenerateAsync().set(featureDatabase.getGenerateAsync());
 
-                    buildModel.getSqlDelightExtension().getDatabases().addAllLater(sqlDelightDatabases);
-                })
+                    return database;
+                }).collect(Collectors.toUnmodifiableSet()));
+
+                buildModel.getSqlDelightExtension().getDatabases().addAllLater(sqlDelightDatabases);
+            }
+        }
+
+        @Override
+        public void bind(ProjectFeatureBindingBuilder builder) {
+            builder.bindProjectFeatureToBuildModel("sqlDelight", SqlDelight.class, KotlinMultiplatformBuildModel.class, ApplyAction.class)
                 .withUnsafeApplyAction()
                 .withBuildModelImplementationType(DefaultSqlDelightBuildModel.class);
         }

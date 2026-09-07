@@ -1,5 +1,5 @@
 plugins {
-    id("org.gradle.experimental.plugin-ecosystem").version("0.1.54")
+    id("org.gradle.experimental.plugin-ecosystem").version("0.1.61")
 }
 
 dependencyResolutionManagement {

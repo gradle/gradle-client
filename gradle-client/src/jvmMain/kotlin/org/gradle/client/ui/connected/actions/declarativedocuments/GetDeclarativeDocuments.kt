@@ -8,10 +8,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import errorRanges
+import indexBasedMultiResolutionContainer
+import indexBasedOverlayResultFromDocuments
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import nodeAt
 import org.gradle.client.build.action.GetResolvedDomAction
 import org.gradle.client.build.model.ResolvedDomPrerequisites
 import org.gradle.client.core.gradle.dcl.*
@@ -33,10 +37,13 @@ import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayNodeOrig
 import org.gradle.internal.declarativedsl.dom.operations.overlay.OverlayOriginContainer
 import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionContainer
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils.resolvedDocument
+import org.gradle.internal.declarativedsl.evaluator.runner.AnalysisStepResult
 import org.gradle.internal.declarativedsl.evaluator.runner.stepResultOrPartialResult
 import org.gradle.tooling.BuildAction
 import org.jetbrains.skiko.Cursor
+import relevantRange
 import java.io.File
+import kotlin.collections.orEmpty
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -79,7 +86,9 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
     @Composable
     private fun SettingsModelContent(viewModel: GetDeclarativeDocumentsModel) {
         viewModel.selectedDocumentResult.stepResults.forEach { (step, result) ->
-            val document = result.stepResultOrPartialResult.resolvedDocument()
+            val document =
+                (result.stepResultOrPartialResult as? AnalysisStepResult.PassedAnalysisStepResult)?.resolvedDocument()
+                    ?: return
 
             /**
              * For multistep settings, we want to avoid document content appearing as duplicates in
@@ -102,7 +111,8 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
             ) {
                 TitleLarge("Step: ${step.stepIdentifier.key}")
                 val topLevelReceiverType =
-                    result.stepResultOrPartialResult.evaluationSchema.analysisSchema.topLevelReceiverType
+                    (result.stepResultOrPartialResult as? AnalysisStepResult.PassedAnalysisStepResult)
+                        ?.evaluationSchema?.analysisSchema?.topLevelReceiverType
                 ElementInfoOrNothingDeclared(topLevelReceiverType, document.document, 0)
             }
         }
@@ -115,9 +125,9 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
 
         val highlightingContext = viewModel.sourceHighlightingContextFor(domWithDefaults)
 
-        val projectEvaluationSchema = viewModel.selectedDocumentResult.stepResults.values.lastOrNull()
-            ?.stepResultOrPartialResult?.evaluationSchema
-            ?: run {
+        val selectedDocumentResult = viewModel.selectedDocumentResult
+        val projectEvaluationSchema = (selectedDocumentResult.stepResults.values.lastOrNull()
+            ?.stepResultOrPartialResult as? AnalysisStepResult.PassedAnalysisStepResult)?.evaluationSchema ?: run {
                 Text("Could not get the schema for the document")
                 return
             }
@@ -201,7 +211,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
         val hasAnyModelDefaultsContent =
             domWithDefaults.overlayNodeOriginContainer.collectToMap(domWithDefaults.document)
                 .any { it.value !is FromOverlay }
-        
+
         val reportedErrors = viewModel.reportedErrors.value
 
         val sources = listOfNotNull(
@@ -249,7 +259,7 @@ class GetDeclarativeDocuments : GetModelAction.GetCompositeModelAction<ResolvedD
                     .allErrorRanges.filter { clickOffset in it.range }
             )
             viewModel.reportErrors(errorsByFileId)
-            CoroutineScope(Dispatchers.Main).launch { 
+            CoroutineScope(Dispatchers.Main).launch {
                 delay(4.seconds)
                 if (viewModel.reportedErrors.value === errorsByFileId) {
                     viewModel.reportErrors(emptyMap())

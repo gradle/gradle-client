@@ -9,6 +9,7 @@ import org.gradle.internal.declarativedsl.dom.DocumentResolution.ElementResoluti
 import org.gradle.internal.declarativedsl.dom.resolution.DocumentResolutionContainer
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisSequenceResult
 import org.gradle.internal.declarativedsl.evaluator.main.SimpleAnalysisEvaluator
+import org.gradle.internal.declarativedsl.evaluator.runner.AnalysisStepResult
 import org.gradle.internal.declarativedsl.evaluator.runner.stepResultOrPartialResult
 import org.gradle.internal.declarativedsl.language.SourceIdentifier
 
@@ -19,9 +20,6 @@ fun analyzer(
         prerequisites.settingsInterpretationSequence,
         prerequisites.projectInterpretationSequence
     )
-
-fun AnalysisSequenceResult.sourceIdentifier(): SourceIdentifier =
-    stepResults.values.last().stepResultOrPartialResult.languageTreeResult.topLevelBlock.sourceData.sourceIdentifier
 
 fun DeclarativeDocument.DocumentNode.ElementNode.type(resolutionContainer: DocumentResolutionContainer): DataType? =
     when (val resolution = resolutionContainer.data(this)) {

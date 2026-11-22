@@ -1,14 +1,14 @@
 package org.gradle.client.ui.connected.actions.declarativedocuments
 
+import ErrorData
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.delay
 import org.gradle.client.build.model.ResolvedDomPrerequisites
-import org.gradle.client.core.gradle.dcl.ErrorData
 import org.gradle.client.core.gradle.dcl.analyzer
-import org.gradle.client.core.gradle.dcl.settingsWithNoOverlayOrigin
 import org.gradle.internal.declarativedsl.dom.operations.overlay.DocumentOverlayResult
 import org.gradle.internal.declarativedsl.evaluator.main.AnalysisDocumentUtils
+import settingsWithNoOverlayOrigin
 import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -21,7 +21,7 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
     private val _reportedErrors = mutableStateOf(emptyMap<String, List<ErrorData>>())
     private fun readDocumentFile() = _selectedDocument.value.takeIf { it.canRead() }?.readText().orEmpty()
     private fun readSettingsFile() = model.settingsFile.takeIf { it.canRead() }?.readText().orEmpty()
-    
+
     val typeRefContext = JointTypeRefContext(
         listOf(model.settingsInterpretationSequence, model.projectInterpretationSequence)
     )
@@ -42,7 +42,7 @@ internal class GetDeclarativeDocumentsModel(private val model: ResolvedDomPrereq
         _highlightedSourceRangeByFileId.value = entries
         _reportedErrors.value = emptyMap()
     }
-    
+
     fun reportErrors(errorsByFileId: Map<String, List<ErrorData>>) {
         _reportedErrors.value = errorsByFileId
     }

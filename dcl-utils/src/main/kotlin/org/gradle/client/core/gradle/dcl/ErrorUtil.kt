@@ -33,7 +33,7 @@ fun userFriendlyErrorMessages(
         } else listOf("Block mismatch")
 
         CrossScopeAccess -> listOf("Cross-scope access")
-        
+
         IsError -> if (node is DeclarativeDocument.DocumentNode.ErrorNode) {
             node.errors.map { error ->
                 when (error) {
@@ -44,7 +44,7 @@ fun userFriendlyErrorMessages(
                 }
             }
         } else listOf("Syntax error")
-        
+
         OpaqueValueInIdentityKey -> listOf("Opaque value passed as identity key")
         UnresolvedName -> listOf("Unresolved name")
         UnresolvedSignature -> listOf("Unresolved function signature")
@@ -53,7 +53,7 @@ fun userFriendlyErrorMessages(
         UnresolvedValueUsed -> listOf("Assigned value is not resolved")
         ValueTypeMismatch -> listOf("Value type mismatch")
         NonEnumValueNamedReference -> listOf("Illegal named reference. Only enum entries can be referenced by name")
-        
+
         UnresolvedBase -> emptyList<String>()
     }
 }

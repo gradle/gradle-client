@@ -2,6 +2,7 @@
 
 package org.gradle.client.ui.composables
 
+import ErrorData
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +19,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
-import org.gradle.client.core.gradle.dcl.ErrorData
 import org.gradle.client.core.gradle.dcl.userFriendlyErrorMessages
 import org.gradle.client.ui.connected.actions.declarativedocuments.HighlightingEntry
 import org.gradle.client.ui.theme.spacing
@@ -121,7 +121,7 @@ private fun SourceFileTitleAndText(
     val errorPopupText = selectedErrors?.takeIf { it.isNotEmpty() }?.let {
         it.flatMap { userFriendlyErrorMessages(it.documentNode, it.resolution) }.joinToString("\n")
     }
-    
+
     if (trimmedSource != null) {
         var isTrimmed by remember { mutableStateOf(true) }
 
